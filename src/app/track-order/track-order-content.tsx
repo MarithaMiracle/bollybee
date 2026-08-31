@@ -35,7 +35,8 @@ export default function TrackOrderContent() {
     : -1;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-16 md:px-8">
+    <div className="bg-[var(--satin-light)]">
+      <div className="mx-auto max-w-xl px-4 py-16 md:px-8 md:py-24">
       <h1 className="font-display text-3xl sm:text-4xl">Track Your Order</h1>
       <p className="mt-2 text-sm text-[var(--muted-foreground)]">
         Enter your order number and email to view status.
@@ -88,6 +89,7 @@ export default function TrackOrderContent() {
           </ul>
         </div>
       )}
+      </div>
     </div>
   );
 }

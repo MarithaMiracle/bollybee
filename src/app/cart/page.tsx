@@ -17,18 +17,21 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-20 text-center md:px-8">
-        <h1 className="font-display text-3xl sm:text-4xl">Your Cart</h1>
-        <p className="mt-4 text-[var(--muted-foreground)]">Your cart is empty.</p>
-        <Button asChild className="mt-8">
-          <Link href="/shop">Continue Shopping</Link>
-        </Button>
+      <div className="bg-[var(--satin-light)]">
+        <div className="mx-auto max-w-7xl px-4 py-20 text-center md:px-8">
+          <h1 className="font-display text-3xl sm:text-4xl">Your Cart</h1>
+          <p className="mt-4 text-[var(--muted-foreground)]">Your cart is empty.</p>
+          <Button asChild className="mt-8">
+            <Link href="/shop">Continue Shopping</Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
+    <div className="bg-[var(--satin-light)]">
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
       <div className="mb-10 flex flex-wrap items-center justify-between gap-4">
         <h1 className="font-display text-3xl sm:text-4xl">Your Cart</h1>
         <button
@@ -101,6 +104,7 @@ export default function CartPage() {
             <Link href="/checkout">Proceed to Checkout</Link>
           </Button>
         </aside>
+      </div>
       </div>
     </div>
   );

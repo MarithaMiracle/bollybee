@@ -3,7 +3,7 @@ import TrackOrderContent from "./track-order-content";
 
 export default function TrackOrderPage() {
   return (
-    <Suspense fallback={<div className="py-20 text-center">Loading…</div>}>
+    <Suspense fallback={<div className="bg-[var(--satin-light)] py-20 text-center">Loading…</div>}>
       <TrackOrderContent />
     </Suspense>
   );

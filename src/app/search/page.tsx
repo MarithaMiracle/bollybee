@@ -31,13 +31,15 @@ async function SearchResults({ q }: { q?: string }) {
 export default async function SearchPage({ searchParams }: SearchPageProps) {
   const { q } = await searchParams;
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
+    <div className="bg-[var(--satin-light)]">
+      <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
       <h1 className="font-display text-3xl sm:text-4xl">Search</h1>
       <Suspense fallback={null}>
         <SearchForm initialQuery={q} />
       </Suspense>
       <div className="mt-10">
         <SearchResults q={q} />
+      </div>
       </div>
     </div>
   );

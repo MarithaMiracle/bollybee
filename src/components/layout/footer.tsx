@@ -68,8 +68,8 @@ export function Footer() {
             © {new Date().getFullYear()} Bollybee Fragrance Lab. All rights reserved.
           </p>
           <div className="flex gap-6 text-xs text-[var(--muted)]">
-            <Link href="/faq" className="hover:text-[var(--plum)]">Privacy</Link>
-            <Link href="/faq" className="hover:text-[var(--plum)]">Terms</Link>
+            <Link href="/privacy" className="hover:text-[var(--plum)]">Privacy</Link>
+            <Link href="/terms" className="hover:text-[var(--plum)]">Terms</Link>
           </div>
         </div>
       </div>
