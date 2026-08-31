@@ -1,4 +1,5 @@
 -- Bollybee Seed Data (Development)
+-- ⚠️  RUN FIRST: supabase/migrations/001_schema.sql
 -- Products are demo/seed content — upload real photography via admin
 
 -- Categories

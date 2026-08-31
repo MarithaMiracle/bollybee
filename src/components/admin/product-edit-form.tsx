@@ -103,9 +103,9 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
         <h2 className="font-display text-xl">Variations</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {(product.variations ?? []).map((v) => (
-            <li key={v.id} className="flex justify-between border p-3">
-              <span>{v.name} — {formatNaira(v.price)} — Stock: {v.stock_quantity}</span>
-              <span className="text-[var(--muted)]">{v.sku}</span>
+            <li key={v.id} className="flex flex-col gap-1 border p-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="min-w-0 break-words">{v.name} — {formatNaira(v.price)} — Stock: {v.stock_quantity}</span>
+              <span className="shrink-0 text-[var(--muted)]">{v.sku}</span>
             </li>
           ))}
         </ul>
@@ -140,7 +140,7 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
 
       <section>
         <h2 className="font-display text-xl">Images</h2>
-        <div className="mt-4 grid grid-cols-3 gap-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
           {(product.images ?? []).map((img) => (
             <div key={img.id} className="relative aspect-square border">
               <Image src={img.image_url} alt={img.alt_text || ""} fill className="object-cover" />

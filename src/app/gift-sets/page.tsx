@@ -22,6 +22,7 @@ export default async function GiftSetsPage() {
             slug={gs.slug}
             description={gs.description}
             price={gs.price}
+            imageUrl={gs.image_url}
           />
         ))}
       </div>

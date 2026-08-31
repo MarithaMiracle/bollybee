@@ -1,9 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
 import { useCart } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
@@ -20,6 +20,13 @@ export function Navbar() {
   const pathname = usePathname();
   const { count } = useCart();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   if (pathname.startsWith("/admin")) return null;
 
@@ -43,10 +50,17 @@ export function Navbar() {
           ))}
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 sm:gap-3">
           <Link
             href="/account/login"
-            className="hidden text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)] hover:text-[var(--plum)] md:block"
+            className="hidden p-2 text-[var(--foreground)] hover:text-[var(--plum)] md:block"
+            aria-label="Account"
+          >
+            <User className="h-5 w-5" strokeWidth={1.5} />
+          </Link>
+          <Link
+            href="/account/login"
+            className="hidden text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)] hover:text-[var(--plum)] lg:block"
           >
             Account
           </Link>
@@ -95,6 +109,15 @@ export function Navbar() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link
+                href="/account/login"
+                className="block text-sm uppercase tracking-[0.18em]"
+                onClick={() => setMobileOpen(false)}
+              >
+                Account
+              </Link>
+            </li>
           </ul>
         </nav>
       )}

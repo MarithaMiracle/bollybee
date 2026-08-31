@@ -38,11 +38,14 @@ console.log("Checking Supabase connection...\n");
 
 let ok = true;
 for (const table of tables) {
-  const { error, count } = await supabase.from(table).select("*", { count: "exact", head: true });
+  const { error } = await supabase.from(table).select("id").limit(1);
   if (error) {
     console.log(`❌ ${table}: ${error.message}`);
     ok = false;
   } else {
+    const { count } = await supabase
+      .from(table)
+      .select("*", { count: "exact", head: true });
     console.log(`✅ ${table}: ${count ?? 0} rows`);
   }
 }

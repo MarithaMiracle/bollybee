@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import { BrandLogo } from "@/components/layout/brand-logo";
-import { Suspense } from "react";
+
+const SATIN_BG = "/brand/admin-login-satin-bg.png";
 
 function LoginForm() {
   const router = useRouter();
@@ -38,28 +40,70 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[var(--surface)] px-4">
-      <div className="w-full max-w-sm border border-[var(--border)] bg-white p-8">
-        <BrandLogo className="mb-8 justify-center" />
-        <h1 className="text-center font-display text-2xl">Admin Login</h1>
-        {searchParams.get("error") === "unauthorized" && (
-          <p className="mt-2 text-center text-sm text-[var(--destructive)]">
-            Unauthorized access
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="pointer-events-none fixed inset-0 -z-10">
+        <Image
+          src={SATIN_BG}
+          alt=""
+          fill
+          className="object-cover object-center"
+          priority
+          sizes="100vw"
+          quality={90}
+        />
+        <div className="absolute inset-0 bg-[var(--background)]/35" aria-hidden />
+      </div>
+
+      <div className="w-full max-w-md">
+        <article className="border border-[var(--border)]/80 bg-[var(--background)]/94 p-8 shadow-sm backdrop-blur-md md:p-10">
+          <div className="flex flex-col items-center text-center">
+            <Image
+              src="/brand/bollybee-mark.png"
+              alt=""
+              width={48}
+              height={58}
+              unoptimized
+            />
+            <p className="mt-4 text-[10px] font-medium uppercase tracking-[0.35em] text-[var(--foreground)]">
+              Admin portal
+            </p>
+            <h1 className="mt-3 font-display text-3xl text-[var(--foreground)] md:text-4xl">
+              Sign in
+            </h1>
+            <p className="mt-2 font-display text-lg italic text-[var(--plum)]">
+              Bollybee administration
+            </p>
+          </div>
+
+          {searchParams.get("error") === "unauthorized" && (
+            <p className="mt-6 rounded-sm bg-red-50 px-4 py-3 text-center text-sm text-red-800">
+              Unauthorized — this account does not have admin access.
+            </p>
+          )}
+
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" required autoComplete="email" />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <PasswordInput
+                id="password"
+                name="password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+            <Button type="submit" variant="accent" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Signing in…" : "Sign in"}
+            </Button>
+          </form>
+
+          <p className="mt-6 text-center text-xs text-[var(--muted-foreground)]">
+            Authorized personnel only
           </p>
-        )}
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" name="password" type="password" required />
-          </div>
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in…" : "Sign In"}
-          </Button>
-        </form>
+        </article>
       </div>
     </div>
   );

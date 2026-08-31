@@ -36,7 +36,7 @@ export default function TrackOrderContent() {
 
   return (
     <div className="mx-auto max-w-xl px-4 py-16 md:px-8">
-      <h1 className="font-display text-4xl">Track Your Order</h1>
+      <h1 className="font-display text-3xl sm:text-4xl">Track Your Order</h1>
       <p className="mt-2 text-sm text-[var(--muted-foreground)]">
         Enter your order number and email to view status.
       </p>
@@ -80,9 +80,9 @@ export default function TrackOrderContent() {
 
           <ul className="mt-6 border-t border-[var(--border)] pt-4 text-sm">
             {order.order_items?.map((item, i) => (
-              <li key={i} className="flex justify-between py-1">
-                <span>{item.product_name} × {item.quantity}</span>
-                <span>{formatNaira(item.total)}</span>
+              <li key={i} className="flex justify-between gap-3 py-1 text-sm">
+                <span className="min-w-0 flex-1 truncate">{item.product_name} × {item.quantity}</span>
+                <span className="shrink-0">{formatNaira(item.total)}</span>
               </li>
             ))}
           </ul>

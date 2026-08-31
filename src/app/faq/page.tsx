@@ -14,7 +14,7 @@ export const metadata = { title: "FAQ" };
 export default function FAQPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 md:px-8 md:py-24">
-      <h1 className="font-display text-4xl">Frequently Asked Questions</h1>
+      <h1 className="font-display text-3xl sm:text-4xl">Frequently Asked Questions</h1>
       <dl className="mt-10 divide-y divide-[var(--border)]">
         {FAQS.map((faq) => (
           <div key={faq.q} className="py-6">

@@ -23,6 +23,7 @@ export default async function SamplePacksPage() {
             slug={pack.slug}
             description={pack.description}
             price={pack.price}
+            imageUrl={pack.image_url}
             variant="sample-pack"
           />
         ))}

@@ -10,16 +10,19 @@ import {
   getCategories,
   getGiftSets,
 } from "@/lib/data/products";
+import { getHeroContent } from "@/lib/data/site";
+import { TrustMarquee } from "@/components/layout/trust-marquee";
 import { FRAGRANCE_FAMILIES, fragranceFamilyLabel } from "@/lib/utils";
 
 export default async function HomePage() {
-  const [featured, bestsellers, newArrivals, categories, giftSets] =
+  const [featured, bestsellers, newArrivals, categories, giftSets, hero] =
     await Promise.all([
       getFeaturedProducts(4),
       getBestsellers(4),
       getNewArrivals(4),
       getCategories(),
       getGiftSets(),
+      getHeroContent(),
     ]);
 
   const shopCategories = categories.filter((c) =>
@@ -28,10 +31,27 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-[var(--surface)]">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-20 md:grid-cols-2 md:items-center md:px-8 md:py-32">
-          <div className="animate-fade-up space-y-6">
+      {/* Hero — full-bleed background, copy on the left */}
+      <section className="relative min-h-[520px] overflow-hidden md:min-h-[600px] lg:min-h-[680px]">
+        {hero?.image_url ? (
+          <Image
+            src={hero.image_url}
+            alt={hero.alt_text ?? "Bollybee fragrance bottle on blush silk"}
+            fill
+            className="object-cover object-[72%_center] md:object-right"
+            priority
+            sizes="100vw"
+            quality={90}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-[var(--surface)]" />
+        )}
+        <div
+          className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/75 to-[var(--background)]/10 md:from-[var(--background)]/95 md:via-[var(--background)]/55 md:to-transparent"
+          aria-hidden
+        />
+        <div className="relative mx-auto flex min-h-[520px] max-w-7xl items-center px-4 py-20 md:min-h-[600px] md:px-8 md:py-32 lg:min-h-[680px]">
+          <div className="animate-fade-up max-w-xl space-y-6">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">
               Bollybee Fragrance Lab
             </p>
@@ -53,29 +73,14 @@ export default async function HomePage() {
               </Button>
             </div>
           </div>
-          <div className="relative aspect-[4/5] overflow-hidden">
-            <Image
-              src="/brand/bollybee-shopping-bag.jpeg"
-              alt="Bollybee branded shopping bag"
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width:768px) 100vw, 50vw"
-            />
-          </div>
         </div>
-        {/* Trust ticker */}
-        <div className="border-y border-[var(--border)] bg-white py-3">
-          <p className="text-center text-[10px] uppercase tracking-[0.28em] text-[var(--muted)]">
-            Long-lasting · Imported Oils · Nationwide Delivery · Secure Paystack Payments
-          </p>
-        </div>
+        <TrustMarquee />
       </section>
 
       {/* Featured */}
       {featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 py-16 md:px-8 md:py-24">
-          <div className="mb-10 flex items-end justify-between">
+          <div className="mb-10 flex flex-wrap items-end justify-between gap-4">
             <div>
               <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--muted)]">Curated</p>
               <h2 className="font-display text-3xl md:text-4xl">Featured Fragrances</h2>
@@ -102,9 +107,21 @@ export default async function HomePage() {
                 <Link
                   key={cat.id}
                   href={`/shop/${cat.slug}`}
-                  className="border border-[var(--border)] bg-white p-6 text-center transition-colors hover:border-[var(--mauve)] md:p-8"
+                  className="group relative aspect-[4/5] overflow-hidden border border-[var(--border)] bg-[var(--surface)]"
                 >
-                  <span className="font-display text-lg tracking-wide">{cat.name}</span>
+                  {cat.image_url ? (
+                    <Image
+                      src={cat.image_url}
+                      alt={cat.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width:768px) 50vw, 25vw"
+                    />
+                  ) : null}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                  <span className="absolute bottom-0 left-0 right-0 p-4 font-display text-lg tracking-wide text-white line-clamp-2">
+                    {cat.name}
+                  </span>
                 </Link>
               ))}
             </div>
@@ -113,18 +130,20 @@ export default async function HomePage() {
       )}
 
       {/* Fragrance families */}
-      <section className="mx-auto max-w-7xl px-4 py-16 md:px-8 md:py-24">
-        <h2 className="mb-10 text-center font-display text-3xl">Explore by Family</h2>
-        <div className="flex flex-wrap justify-center gap-3">
-          {FRAGRANCE_FAMILIES.map((family) => (
-            <Link
-              key={family}
-              href={`/shop?family=${family.toLowerCase()}`}
-              className="border border-[var(--border)] px-5 py-2.5 text-xs uppercase tracking-[0.16em] transition-colors hover:bg-[var(--plum)] hover:text-white"
-            >
-              {fragranceFamilyLabel(family)}
-            </Link>
-          ))}
+      <section className="bg-black py-16 text-white md:py-24">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <h2 className="mb-10 text-center font-display text-3xl">Explore by Family</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {FRAGRANCE_FAMILIES.map((family) => (
+              <Link
+                key={family}
+                href={`/shop?family=${family.toLowerCase()}`}
+                className="border border-white/30 px-5 py-2.5 text-xs uppercase tracking-[0.16em] transition-colors hover:border-white hover:bg-white hover:text-black"
+              >
+                {fragranceFamilyLabel(family)}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -163,13 +182,26 @@ export default async function HomePage() {
               <Link
                 key={gs.id}
                 href={`/gift-sets#${gs.slug}`}
-                className="border border-[var(--border)] p-6 transition-shadow hover:shadow-md"
+                className="group overflow-hidden border border-[var(--border)] bg-white transition-shadow hover:shadow-md"
               >
-                <h3 className="font-display text-xl">{gs.name}</h3>
-                <p className="mt-2 text-sm text-[var(--muted-foreground)] line-clamp-2">
-                  {gs.description}
-                </p>
-                <p className="mt-4 font-medium">₦{gs.price.toLocaleString()}</p>
+                {gs.image_url && (
+                  <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface)]">
+                    <Image
+                      src={gs.image_url}
+                      alt={gs.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(max-width:768px) 100vw, 33vw"
+                    />
+                  </div>
+                )}
+                <div className="p-6">
+                  <h3 className="font-display text-xl">{gs.name}</h3>
+                  <p className="mt-2 text-sm text-[var(--muted-foreground)] line-clamp-2">
+                    {gs.description}
+                  </p>
+                  <p className="mt-4 font-medium">₦{gs.price.toLocaleString()}</p>
+                </div>
               </Link>
             ))}
           </div>

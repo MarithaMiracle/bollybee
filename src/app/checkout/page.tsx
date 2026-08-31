@@ -102,7 +102,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
-      <h1 className="mb-10 font-display text-4xl">Checkout</h1>
+      <h1 className="mb-10 font-display text-3xl sm:text-4xl">Checkout</h1>
       <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
           <section>
@@ -189,9 +189,9 @@ export default function CheckoutPage() {
           <h2 className="font-display text-xl">Order Review</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {items.map((i) => (
-              <li key={i.variationId} className="flex justify-between">
-                <span>{i.productName} × {i.quantity}</span>
-                <span>{formatNaira((i.price ?? 0) * i.quantity)}</span>
+              <li key={i.variationId} className="flex justify-between gap-3 text-sm">
+                <span className="min-w-0 flex-1 truncate">{i.productName} × {i.quantity}</span>
+                <span className="shrink-0">{formatNaira((i.price ?? 0) * i.quantity)}</span>
               </li>
             ))}
           </ul>

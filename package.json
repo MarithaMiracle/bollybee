@@ -10,7 +10,11 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "verify:setup": "node scripts/verify-setup.mjs",
-    "db:seed": "node scripts/run-seed.mjs"
+    "db:seed": "node scripts/run-seed.mjs",
+    "db:migrate": "node scripts/run-migration.mjs",
+    "db:stock-images": "node scripts/apply-stock-images.mjs",
+    "db:hero": "node scripts/set-hero-image.mjs",
+    "db:about": "node scripts/set-about-image.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

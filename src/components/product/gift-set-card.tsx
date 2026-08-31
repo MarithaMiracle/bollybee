@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/components/cart/cart-provider";
@@ -11,6 +12,7 @@ interface GiftSetCardProps {
   slug: string;
   description: string | null;
   price: number;
+  imageUrl?: string | null;
   variant?: "gift-set" | "sample-pack";
 }
 
@@ -20,6 +22,7 @@ export function GiftSetCard({
   slug,
   description,
   price,
+  imageUrl,
   variant = "gift-set",
 }: GiftSetCardProps) {
   const { addItem } = useCart();
@@ -41,11 +44,26 @@ export function GiftSetCard({
   }
 
   return (
-    <article className="border border-[var(--border)] bg-white p-6">
-      <h2 className="font-display text-2xl">{name}</h2>
-      <p className="mt-3 text-sm text-[var(--muted-foreground)]">{description}</p>
-      <p className="mt-4 text-lg font-medium">{formatNaira(price)}</p>
-      <Button className="mt-4" onClick={handleAdd}>Add to Cart</Button>
+    <article className="overflow-hidden border border-[var(--border)] bg-white">
+      {imageUrl && (
+        <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface)]">
+          <Image
+            src={imageUrl}
+            alt={name}
+            fill
+            className="object-cover"
+            sizes="(max-width:768px) 100vw, 33vw"
+          />
+        </div>
+      )}
+      <div className="p-6">
+        <h2 className="line-clamp-2 font-display text-xl sm:text-2xl">{name}</h2>
+        <p className="mt-3 line-clamp-3 text-sm text-[var(--muted-foreground)]">{description}</p>
+        <p className="mt-4 text-lg font-medium">{formatNaira(price)}</p>
+        <Button className="mt-4 w-full sm:w-auto" onClick={handleAdd}>
+          Add to Cart
+        </Button>
+      </div>
     </article>
   );
 }

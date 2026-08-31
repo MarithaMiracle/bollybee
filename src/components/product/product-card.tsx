@@ -39,6 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width:768px) 50vw, 25vw"
+              quality={90}
             />
           ) : (
             <ProductPlaceholder name={product.name} />
@@ -54,7 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
               {fragranceFamilyLabel(product.fragrance_family)}
             </p>
           )}
-          <h3 className="font-display text-lg tracking-wide">{product.name}</h3>
+          <h3 className="font-display text-lg tracking-wide line-clamp-2">{product.name}</h3>
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-medium">{formatNaira(minPrice)}</span>
             {compareAt && compareAt > minPrice && (

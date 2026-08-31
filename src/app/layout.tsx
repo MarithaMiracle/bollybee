@@ -28,7 +28,7 @@ export default function RootLayout({
       <body className="min-h-screen antialiased">
         <CartProvider>
           <Navbar />
-          <main>{children}</main>
+          <main className="min-w-0">{children}</main>
           <Footer />
           <Toaster position="bottom-center" richColors />
         </CartProvider>

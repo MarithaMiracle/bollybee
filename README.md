@@ -45,8 +45,10 @@ cp .env.example .env.local
    - `supabase/migrations/001_schema.sql`
    - `supabase/migrations/002_seed.sql`
    - `supabase/migrations/003_storage.sql`
+   - `supabase/migrations/004_stock_images.sql`
 3. Copy URL and keys to `.env.local`
 4. Verify setup: `npm run verify:setup`
+5. Apply demo stock images: `npm run db:stock-images`
 
 ### 3. Paystack
 
@@ -85,6 +87,15 @@ See `.env.example` for all required variables.
 | `npm run typecheck` | TypeScript check |
 | `npm test` | Run Vitest tests |
 | `npm run verify:setup` | Check Supabase connection and migrations |
+| `npm run db:stock-images` | Load demo product/hero image URLs into Supabase |
+
+## Product images
+
+**You do not need Cloudinary.** Admin product uploads go to **Supabase Storage** (`product-images` bucket) via the admin product edit page. URLs are saved in the `product_images` table.
+
+Demo stock photos use Unsplash URLs stored in Supabase for preview purposes. Replace them by uploading real photos in admin — uploads overwrite/add new rows in `product_images`.
+
+Cloudinary is only worth adding later if you need advanced on-the-fly transforms (auto-crop, face detection, etc.). Supabase Storage is sufficient for Bollybee.
 
 ## Testing
 
@@ -106,7 +117,8 @@ Tests cover money utilities, cart validation schemas, and Paystack reference for
 ## Brand Assets
 
 Official assets in `public/brand/`:
-- `bollybee-logo.jpeg`
+- `bollybee-logo.jpeg` — full logo with wordmark
+- `bollybee-mark.png` — transparent perfume bottle mark (used in nav/footer)
 - `bollybee-shopping-bag.jpeg`
 
 Upload product photography via admin → Supabase Storage when ready.

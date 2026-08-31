@@ -67,17 +67,17 @@ export default async function OrderSuccessPage({ searchParams }: SuccessPageProp
             <dt className="text-[var(--muted)]">Total paid</dt>
             <dd className="font-medium">{formatNaira(order.total)}</dd>
           </div>
-          <div className="flex justify-between">
-            <dt className="text-[var(--muted)]">Shipping to</dt>
-            <dd className="text-right">{order.shipping_address}, {order.shipping_lga}, {order.shipping_state}</dd>
+          <div className="flex flex-col justify-between gap-1 sm:flex-row sm:gap-4">
+            <dt className="shrink-0 text-[var(--muted)]">Shipping to</dt>
+            <dd className="text-left sm:text-right">{order.shipping_address}, {order.shipping_lga}, {order.shipping_state}</dd>
           </div>
         </dl>
 
         <ul className="mt-6 divide-y divide-[var(--border)] border-t border-[var(--border)] pt-4">
           {order.order_items?.map((item, i) => (
-            <li key={i} className="flex justify-between py-2 text-sm">
-              <span>{item.product_name} × {item.quantity}</span>
-              <span>{formatNaira(item.total)}</span>
+            <li key={i} className="flex justify-between gap-3 py-2 text-sm">
+              <span className="min-w-0 flex-1 truncate">{item.product_name} × {item.quantity}</span>
+              <span className="shrink-0">{formatNaira(item.total)}</span>
             </li>
           ))}
         </ul>

@@ -27,7 +27,7 @@ export default async function EditProductPage({ params }: Props) {
 
   return (
     <div>
-      <h1 className="font-display text-3xl">Edit: {product.name}</h1>
+      <h1 className="truncate font-display text-2xl sm:text-3xl">Edit: {product.name}</h1>
       <div className="mt-8">
         <ProductEditForm product={product} categories={categories ?? []} />
       </div>

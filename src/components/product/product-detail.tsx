@@ -77,6 +77,7 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
               className="object-cover"
               priority
               sizes="(max-width:1024px) 100vw, 50vw"
+              quality={90}
             />
           ) : (
             <ProductPlaceholder name={product.name} volumeMl={selectedVariation.volume_ml} />
@@ -95,7 +96,7 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
             </p>
           )}
 
-          <h1 className="font-display text-4xl tracking-wide md:text-5xl">{product.name}</h1>
+          <h1 className="break-words font-display text-3xl tracking-wide sm:text-4xl md:text-5xl">{product.name}</h1>
 
           <div className="flex items-baseline gap-3">
             <span className="text-xl font-medium">{formatNaira(selectedVariation.price)}</span>
@@ -194,15 +195,15 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
       </div>
 
       {product.scent_notes && product.scent_notes.length > 0 && (
-        <section className="mt-20">
-          <h2 className="mb-8 font-display text-3xl">Scent Profile</h2>
+        <section className="mt-12 md:mt-20">
+          <h2 className="mb-6 font-display text-2xl md:mb-8 md:text-3xl">Scent Profile</h2>
           <ScentNotesDisplay notes={product.scent_notes} />
         </section>
       )}
 
       {related.length > 0 && (
-        <section className="mt-20">
-          <h2 className="mb-8 font-display text-3xl">You May Also Like</h2>
+        <section className="mt-12 md:mt-20">
+          <h2 className="mb-6 font-display text-2xl md:mb-8 md:text-3xl">You May Also Like</h2>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-6">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} />

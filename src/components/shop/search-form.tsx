@@ -15,16 +15,16 @@ export function SearchForm({ initialQuery }: { initialQuery?: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="mt-6 flex gap-2">
+    <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
       <Input
         type="search"
         placeholder="Search fragrances…"
         value={q}
         onChange={(e) => setQ(e.target.value)}
         aria-label="Search fragrances"
-        className="max-w-md"
+        className="w-full sm:max-w-md"
       />
-      <Button type="submit">Search</Button>
+      <Button type="submit" className="w-full sm:w-auto">Search</Button>
     </form>
   );
 }
