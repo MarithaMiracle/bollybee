@@ -32,6 +32,15 @@ describe("payment reference format", () => {
     const ref = generatePaymentReference();
     expect(ref.startsWith("BOLLYBEE-")).toBe(true);
   });
+
+  it("resolves Paystack redirect reference params", async () => {
+    const { resolvePaystackReference } = await import("@/lib/paystack/reference");
+    expect(resolvePaystackReference({ reference: "BOLLYBEE-ABC" })).toBe("BOLLYBEE-ABC");
+    expect(resolvePaystackReference({ trxref: "BOLLYBEE-ABC" })).toBe("BOLLYBEE-ABC");
+    expect(
+      resolvePaystackReference({ reference: ["BOLLYBEE-FIRST", "BOLLYBEE-SECOND"] })
+    ).toBe("BOLLYBEE-FIRST");
+  });
 });
 
 describe("checkout validation schema", () => {

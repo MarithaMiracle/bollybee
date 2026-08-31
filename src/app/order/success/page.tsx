@@ -2,15 +2,18 @@ import Link from "next/link";
 import { verifyAndFulfillOrder } from "@/actions/checkout";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/utils";
+import { resolvePaystackReference } from "@/lib/paystack/reference";
+import type { PaystackRedirectParams } from "@/lib/paystack/reference";
 
 export const dynamic = "force-dynamic";
 
 interface SuccessPageProps {
-  searchParams: Promise<{ reference?: string }>;
+  searchParams: Promise<PaystackRedirectParams>;
 }
 
 export default async function OrderSuccessPage({ searchParams }: SuccessPageProps) {
-  const { reference } = await searchParams;
+  const params = await searchParams;
+  const reference = resolvePaystackReference(params);
 
   if (!reference) {
     return (

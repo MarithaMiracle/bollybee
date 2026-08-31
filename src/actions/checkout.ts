@@ -119,7 +119,7 @@ export async function initializeCheckout(
       email: parsedCheckout.data.email,
       amountKobo: nairaToKobo(total),
       reference,
-      callbackUrl: `${appUrl}/order/success?reference=${reference}`,
+      callbackUrl: `${appUrl}/order/success`,
       metadata: { order_id: order.id, order_number: order.order_number },
     });
 
@@ -137,14 +137,49 @@ export async function initializeCheckout(
   }
 }
 
-export async function verifyAndFulfillOrder(reference: string) {
+export async function verifyAndFulfillOrder(rawReference: string) {
+  const reference = rawReference.trim();
+  if (!reference) return { error: "Payment reference is required" };
+
   const supabase = createServiceClient();
 
-  const { data: payment } = await supabase
-    .from("payments")
-    .select("*, orders(*)")
-    .eq("reference", reference)
-    .single();
+  async function findPayment(ref: string) {
+    const { data } = await supabase
+      .from("payments")
+      .select("*, orders(*)")
+      .eq("reference", ref)
+      .maybeSingle();
+    return data;
+  }
+
+  let payment = await findPayment(reference);
+
+  // Paystack may normalize reference casing on redirect
+  if (!payment) {
+    payment = await findPayment(reference.toUpperCase());
+  }
+  if (!payment) {
+    payment = await findPayment(reference.toLowerCase());
+  }
+
+  // Payment succeeded on Paystack but DB row missing — recover via Paystack metadata
+  if (!payment) {
+    const { verifyTransaction } = await import("@/lib/paystack");
+    const verified = await verifyTransaction(reference);
+    const orderId = verified?.metadata?.order_id;
+
+    if (typeof orderId === "string") {
+      const { data } = await supabase
+        .from("payments")
+        .select("*, orders(*)")
+        .eq("order_id", orderId)
+        .eq("status", "PENDING")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      payment = data;
+    }
+  }
 
   if (!payment) return { error: "Payment not found" };
 
@@ -153,18 +188,18 @@ export async function verifyAndFulfillOrder(reference: string) {
   }
 
   const { verifyTransaction } = await import("@/lib/paystack");
-  const verified = await verifyTransaction(reference);
+  const verified = await verifyTransaction(payment.reference);
 
   if (!verified || verified.status !== "success") {
     await supabase
       .from("payments")
       .update({ status: "FAILED", updated_at: new Date().toISOString() })
-      .eq("reference", reference);
+      .eq("reference", payment.reference);
     return { error: "Payment verification failed" };
   }
 
   const order = payment.orders as { id: string; total: number; payment_status: string };
-  const verifiedAmountNaira = verified.amount / 100;
+  const verifiedAmountNaira = Math.round(verified.amount) / 100;
 
   if (verifiedAmountNaira !== order.total || verified.currency !== "NGN") {
     return { error: "Payment amount mismatch" };
@@ -179,7 +214,7 @@ export async function verifyAndFulfillOrder(reference: string) {
       metadata: verified.metadata,
       updated_at: new Date().toISOString(),
     })
-    .eq("reference", reference)
+    .eq("reference", payment.reference)
     .eq("status", "PENDING");
 
   await supabase

@@ -2,7 +2,8 @@
 
 Premium Nigerian fragrance e-commerce platform built with **Next.js**, **Supabase**, and **Paystack**.
 
-**Repository:** https://github.com/MarithaMiracle/bollybee-perfume
+**Live site:** https://bollybee.vercel.app/  
+**Repository:** https://github.com/MarithaMiracle/bollybee
 
 ## Features
 
@@ -125,7 +126,26 @@ Upload product photography via admin → Supabase Storage when ready.
 
 ## Deployment
 
-Deploy to Vercel or any Node host. Configure all env vars and Paystack webhook in production.
+**Production:** [bollybee.vercel.app](https://bollybee.vercel.app/) (Vercel)
+
+In Vercel → Project → Settings → Environment Variables, set:
+
+| Variable | Production value |
+|----------|------------------|
+| `NEXT_PUBLIC_APP_URL` | `https://bollybee.vercel.app` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
+| `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack live public key |
+| `PAYSTACK_SECRET_KEY` | Paystack live secret key |
+| `PAYSTACK_WEBHOOK_SECRET` | From Paystack webhook settings |
+
+Also configure:
+
+- **Paystack webhook URL:** `https://bollybee.vercel.app/api/payments/paystack/webhook`
+- **Supabase Auth redirect URLs:** add `https://bollybee.vercel.app/**` under Authentication → URL configuration
+
+`NEXT_PUBLIC_APP_URL` drives SEO metadata, sitemap, robots.txt, and Paystack checkout callbacks — set it in Vercel for production builds.
 
 ## License
 
