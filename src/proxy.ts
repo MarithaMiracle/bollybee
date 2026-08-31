@@ -25,14 +25,29 @@ export async function proxy(request: NextRequest) {
     }
   );
 
+  // Refresh session — required so auth cookies stay valid across requests
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const { pathname } = request.nextUrl;
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isAdminLogin = pathname === "/admin/login";
+  const isAccountLogin = pathname === "/account/login";
+  const isAccountProtected =
+    pathname.startsWith("/account") && !isAccountLogin;
 
-  if (isAdminRoute && !isLoginPage) {
+  // Customer account: redirect signed-in users away from login
+  if (isAccountLogin && user) {
+    return NextResponse.redirect(new URL("/account/orders", request.url));
+  }
+
+  // Customer account: require sign-in for account pages
+  if (isAccountProtected && !user) {
+    return NextResponse.redirect(new URL("/account/login", request.url));
+  }
+
+  if (isAdminRoute && !isAdminLogin) {
     if (!user) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
@@ -50,7 +65,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (isLoginPage && user) {
+  if (isAdminLogin && user) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -66,5 +81,7 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
 };

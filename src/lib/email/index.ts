@@ -1,62 +1,50 @@
-export interface EmailPayload {
-  to: string;
-  subject: string;
-  html: string;
+import { Resend } from "resend";
+
+let resend: Resend | null = null;
+
+function getResend() {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!resend) resend = new Resend(process.env.RESEND_API_KEY);
+  return resend;
 }
 
-export async function sendEmail(payload: EmailPayload): Promise<boolean> {
-  // Isolated email abstraction — configure Resend/SendGrid/etc. via env
-  const provider = process.env.EMAIL_PROVIDER;
+/** Resend test sender only delivers to verified addresses — redirect when using onboarding@resend.dev */
+export function resolveEmailRecipient(to: string): string {
+  const from = process.env.EMAIL_FROM ?? "";
+  const testTo = process.env.RESEND_TEST_TO;
+  if (testTo && from.includes("resend.dev")) return testTo;
+  return to;
+}
 
-  if (!provider) {
-    if (process.env.NODE_ENV === "development") {
-      console.log("[Email]", payload.subject, "→", payload.to);
-    }
-    return true;
+export async function sendTemplatedEmail(
+  to: string,
+  template: { subject: string; html: string }
+): Promise<boolean> {
+  const client = getResend();
+  if (!client) {
+    console.warn("[email] RESEND_API_KEY not set — skipped:", template.subject);
+    return false;
   }
 
-  // Future: integrate actual email provider
-  return true;
+  const from = process.env.EMAIL_FROM || "Bollybee <onboarding@resend.dev>";
+  const recipient = resolveEmailRecipient(to);
+
+  try {
+    const { error } = await client.emails.send({
+      from,
+      to: recipient,
+      subject: template.subject,
+      html: template.html,
+    });
+    if (error) {
+      console.error("[email] Resend error:", error);
+      return false;
+    }
+    return true;
+  } catch (e) {
+    console.error("[email] Send failed:", e);
+    return false;
+  }
 }
 
-export function orderConfirmationEmail(order: {
-  orderNumber: string;
-  firstName: string;
-  total: number;
-  items: { productName: string; quantity: number; total: number }[];
-}): EmailPayload {
-  const itemsHtml = order.items
-    .map(
-      (i) =>
-        `<tr><td>${i.productName}</td><td>${i.quantity}</td><td>₦${i.total.toLocaleString()}</td></tr>`
-    )
-    .join("");
-
-  return {
-    to: "",
-    subject: `Order Confirmed — ${order.orderNumber}`,
-    html: `
-      <h1>Thank you, ${order.firstName}!</h1>
-      <p>Your Bollybee order <strong>${order.orderNumber}</strong> has been confirmed.</p>
-      <table>${itemsHtml}</table>
-      <p><strong>Total: ₦${order.total.toLocaleString()}</strong></p>
-      <p>Track your order at bollybee.com/track-order</p>
-    `,
-  };
-}
-
-export function contactAcknowledgementEmail(name: string): EmailPayload {
-  return {
-    to: "",
-    subject: "We received your message — Bollybee",
-    html: `<p>Dear ${name},</p><p>Thank you for contacting Bollybee. We will respond shortly.</p>`,
-  };
-}
-
-export function adminNewOrderEmail(orderNumber: string, total: number): EmailPayload {
-  return {
-    to: process.env.ADMIN_EMAIL || "",
-    subject: `New Order — ${orderNumber}`,
-    html: `<p>New order ${orderNumber} for ₦${total.toLocaleString()}</p>`,
-  };
-}
+export * from "./templates";

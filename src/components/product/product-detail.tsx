@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { ProductPlaceholder } from "@/components/product/product-placeholder";
 import { ScentNotesDisplay } from "@/components/product/scent-notes";
 import { ProductCard } from "@/components/product/product-card";
+import { WishlistButton } from "@/components/product/wishlist-button";
+import { ProductReviews, type ProductReview } from "@/components/product/product-reviews";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatNaira, fragranceFamilyLabel } from "@/lib/utils";
 import type { Product, ProductVariation } from "@/types";
@@ -17,9 +19,12 @@ import type { Product, ProductVariation } from "@/types";
 interface ProductDetailProps {
   product: Product;
   related: Product[];
+  reviews: ProductReview[];
+  isLoggedIn: boolean;
+  inWishlist: boolean;
 }
 
-export function ProductDetail({ product, related }: ProductDetailProps) {
+export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlist }: ProductDetailProps) {
   const variations = (product.variations ?? []).filter((v) => v.active);
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation>(
     variations[0]
@@ -82,6 +87,9 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
           ) : (
             <ProductPlaceholder name={product.name} volumeMl={selectedVariation.volume_ml} />
           )}
+          <div className="absolute right-3 top-3">
+            <WishlistButton productId={product.id} initialInWishlist={inWishlist} />
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -211,6 +219,13 @@ export function ProductDetail({ product, related }: ProductDetailProps) {
           </div>
         </section>
       )}
+
+      <ProductReviews
+        productId={product.id}
+        productSlug={product.slug}
+        reviews={reviews}
+        isLoggedIn={isLoggedIn}
+      />
     </div>
   );
 }

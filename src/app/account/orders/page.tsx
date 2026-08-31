@@ -2,8 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatNaira } from "@/lib/utils";
-import { signOut } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { AccountNav } from "@/components/account/account-nav";
 import { Pagination } from "@/components/ui/pagination";
 import {
   ACCOUNT_ORDERS_PAGE_SIZE,
@@ -43,24 +42,12 @@ export default async function AccountOrdersPage({ searchParams }: AccountOrdersP
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl">My Orders</h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            {total} order{total !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <form
-          action={async () => {
-            "use server";
-            await signOut();
-            redirect("/");
-          }}
-        >
-          <Button type="submit" variant="outline" size="sm">
-            Sign Out
-          </Button>
-        </form>
+      <AccountNav active="/account/orders" />
+      <div>
+        <h1 className="font-display text-3xl">My Orders</h1>
+        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+          {total} order{total !== 1 ? "s" : ""}
+        </p>
       </div>
       {!orders?.length ? (
         <p className="mt-8 text-[var(--muted-foreground)]">No orders yet.</p>

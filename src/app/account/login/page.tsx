@@ -38,8 +38,9 @@ export default function AccountLoginPage() {
         if (result?.error) {
           toast.error(result.error);
         } else {
-          toast.success("Account created! Check your email if confirmation is required.");
+          toast.success("Account created!");
           router.push("/account/orders");
+          router.refresh();
         }
       }
     } finally {

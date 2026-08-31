@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/components/cart/cart-provider";
-import { initializeCheckout } from "@/actions/checkout";
+import { initializeCheckout, getCheckoutDefaults } from "@/actions/checkout";
+import { validatePromoCode } from "@/actions/promo";
+import { trackAbandonedCart } from "@/actions/abandoned-cart";
 import { formatNaira } from "@/lib/utils";
 
 interface StateOption {
@@ -21,28 +23,50 @@ interface LgaOption {
   name: string;
 }
 
+const EMPTY_FORM = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  shippingState: "",
+  shippingLga: "",
+  shippingCity: "",
+  shippingAddress: "",
+  shippingLandmark: "",
+  shippingPostalCode: "",
+  customerNotes: "",
+};
+
 export default function CheckoutPage() {
   const { items, clearCart } = useCart();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [prefilled, setPrefilled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [saveAddress, setSaveAddress] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoLabel, setPromoLabel] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [states, setStates] = useState<StateOption[]>([]);
   const [lgas, setLgas] = useState<LgaOption[]>([]);
   const [shippingFee, setShippingFee] = useState<number | null>(null);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    shippingState: "",
-    shippingLga: "",
-    shippingCity: "",
-    shippingAddress: "",
-    shippingLandmark: "",
-    shippingPostalCode: "",
-    customerNotes: "",
-  });
+  const [form, setForm] = useState(EMPTY_FORM);
 
   const subtotal = items.reduce((s, i) => s + (i.price ?? 0) * i.quantity, 0);
+
+  useEffect(() => {
+    getCheckoutDefaults().then((defaults) => {
+      if (!defaults) return;
+      setForm((prev) => ({
+        ...prev,
+        ...defaults,
+        customerNotes: "",
+      }));
+      setPrefilled(true);
+      setIsLoggedIn(true);
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/shipping/states")
@@ -72,6 +96,11 @@ export default function CheckoutPage() {
     }
   }, [form.shippingState, form.shippingLga]);
 
+  const trackCart = useCallback(() => {
+    if (!form.email || !items.length) return;
+    trackAbandonedCart(form.email, items);
+  }, [form.email, items]);
+
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
@@ -81,10 +110,31 @@ export default function CheckoutPage() {
     );
   }
 
+  async function handleApplyPromo() {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    const result = await validatePromoCode(promoCode, subtotal);
+    setPromoLoading(false);
+    if (result.error) {
+      toast.error(result.error);
+      setPromoDiscount(0);
+      setPromoLabel(null);
+    } else if (result.result) {
+      setPromoDiscount(result.result.discount);
+      setPromoLabel(result.result.description ?? result.result.code);
+      toast.success("Promo code applied");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    const result = await initializeCheckout(items, form);
+    const checkoutData = {
+      ...form,
+      promoCode: promoDiscount > 0 ? promoCode : "",
+      saveAddress: saveAddress ? "true" : "false",
+    };
+    const result = await initializeCheckout(items, checkoutData);
     setLoading(false);
 
     if (result.error) {
@@ -98,11 +148,18 @@ export default function CheckoutPage() {
     }
   }
 
-  const total = subtotal + (shippingFee ?? 0);
+  const total = Math.max(0, subtotal + (shippingFee ?? 0) - promoDiscount);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
-      <h1 className="mb-10 font-display text-3xl sm:text-4xl">Checkout</h1>
+      <div className="mb-10">
+        <h1 className="font-display text-3xl sm:text-4xl">Checkout</h1>
+        {prefilled && (
+          <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+            Welcome back — we&apos;ve filled in your details from your saved address or last order.
+          </p>
+        )}
+      </div>
       <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_360px]">
         <div className="space-y-8">
           <section>
@@ -118,7 +175,14 @@ export default function CheckoutPage() {
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  onBlur={trackCart}
+                />
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
@@ -177,6 +241,18 @@ export default function CheckoutPage() {
                 <Label htmlFor="landmark">Landmark (optional)</Label>
                 <Input id="landmark" value={form.shippingLandmark} onChange={(e) => setForm({ ...form, shippingLandmark: e.target.value })} />
               </div>
+              {isLoggedIn && (
+                <div className="sm:col-span-2 flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="saveAddress"
+                    checked={saveAddress}
+                    onChange={(e) => setSaveAddress(e.target.checked)}
+                    className="h-4 w-4"
+                  />
+                  <Label htmlFor="saveAddress">Save this address to my profile</Label>
+                </div>
+              )}
               <div className="sm:col-span-2">
                 <Label htmlFor="notes">Order notes (optional)</Label>
                 <Textarea id="notes" value={form.customerNotes} onChange={(e) => setForm({ ...form, customerNotes: e.target.value })} />
@@ -195,6 +271,22 @@ export default function CheckoutPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-4 flex gap-2">
+            <Input
+              placeholder="Promo code"
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+              className="flex-1"
+            />
+            <Button type="button" variant="outline" onClick={handleApplyPromo} disabled={promoLoading}>
+              Apply
+            </Button>
+          </div>
+          {promoLabel && promoDiscount > 0 && (
+            <p className="mt-2 text-xs text-green-700">{promoLabel} applied</p>
+          )}
+
           <dl className="mt-6 space-y-2 border-t border-[var(--border)] pt-4 text-sm">
             <div className="flex justify-between">
               <dt>Subtotal</dt>
@@ -204,6 +296,12 @@ export default function CheckoutPage() {
               <dt>Shipping</dt>
               <dd>{shippingFee !== null ? formatNaira(shippingFee) : "—"}</dd>
             </div>
+            {promoDiscount > 0 && (
+              <div className="flex justify-between text-green-700">
+                <dt>Discount</dt>
+                <dd>−{formatNaira(promoDiscount)}</dd>
+              </div>
+            )}
             <div className="flex justify-between text-base font-medium">
               <dt>Total</dt>
               <dd>{formatNaira(total)}</dd>

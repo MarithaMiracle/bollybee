@@ -3,8 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Search, ShoppingBag, User, X } from "lucide-react";
+import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { BrandLogo } from "@/components/layout/brand-logo";
+import {
+  AccountMobileNavLink,
+  AccountNavLink,
+  AccountNavTextLink,
+} from "@/components/layout/account-nav-link";
 import { useCart } from "@/components/cart/cart-provider";
 import { cn } from "@/lib/utils";
 
@@ -51,19 +56,8 @@ export function Navbar() {
         </nav>
 
         <div className="flex items-center gap-1 sm:gap-3">
-          <Link
-            href="/account/login"
-            className="hidden p-2 text-[var(--foreground)] hover:text-[var(--plum)] md:block"
-            aria-label="Account"
-          >
-            <User className="h-5 w-5" strokeWidth={1.5} />
-          </Link>
-          <Link
-            href="/account/login"
-            className="hidden text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)] hover:text-[var(--plum)] lg:block"
-          >
-            Account
-          </Link>
+          <AccountNavLink className="hidden p-2 text-[var(--foreground)] hover:text-[var(--plum)] md:block" />
+          <AccountNavTextLink className="hidden lg:block text-xs uppercase tracking-[0.18em] text-[var(--muted-foreground)] hover:text-[var(--plum)]" />
           <Link
             href="/search"
             className="p-2 text-[var(--foreground)] hover:text-[var(--plum)]"
@@ -110,13 +104,10 @@ export function Navbar() {
               </li>
             ))}
             <li>
-              <Link
-                href="/account/login"
+              <AccountMobileNavLink
                 className="block text-sm uppercase tracking-[0.18em]"
-                onClick={() => setMobileOpen(false)}
-              >
-                Account
-              </Link>
+                onNavigate={() => setMobileOpen(false)}
+              />
             </li>
           </ul>
         </nav>

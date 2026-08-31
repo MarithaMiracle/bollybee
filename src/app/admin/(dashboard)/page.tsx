@@ -6,7 +6,8 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { AdminBadge } from "@/components/admin/admin-badge";
 import { AdminCard, AdminEmpty } from "@/components/admin/admin-card";
-import { Banknote, Package, ShoppingCart, Clock } from "lucide-react";
+import { Banknote, Package, ShoppingCart, Clock, AlertTriangle } from "lucide-react";
+import { relationName } from "@/lib/supabase/relation";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +20,7 @@ export default async function AdminDashboardPage() {
     { count: productCount },
     { data: orders },
     { data: payments },
+    { data: lowStock },
   ] = await Promise.all([
     supabase.from("orders").select("*", { count: "exact", head: true }),
     supabase.from("products").select("*", { count: "exact", head: true }),
@@ -28,6 +30,13 @@ export default async function AdminDashboardPage() {
       .order("created_at", { ascending: false })
       .limit(8),
     supabase.from("payments").select("status, amount"),
+    supabase
+      .from("product_variations")
+      .select("name, stock_quantity, products(name)")
+      .lte("stock_quantity", 5)
+      .eq("active", true)
+      .order("stock_quantity", { ascending: true })
+      .limit(10),
   ]);
 
   const revenue =
@@ -48,6 +57,32 @@ export default async function AdminDashboardPage() {
         <AdminStatCard label="Products" value={String(productCount ?? 0)} icon={Package} />
         <AdminStatCard label="Pending payments" value={String(pendingOrders)} icon={Clock} />
       </div>
+
+      {(lowStock?.length ?? 0) > 0 && (
+        <div>
+          <div className="mb-4 flex items-end justify-between">
+            <h2 className="font-display text-xl text-[var(--foreground)]">Low stock</h2>
+            <Link href="/admin/products" className="text-xs uppercase tracking-wider text-[var(--plum)] hover:underline">
+              Manage inventory
+            </Link>
+          </div>
+          <AdminCard>
+            <ul className="divide-y divide-[var(--border)]">
+              {lowStock!.map((v, i) => (
+                <li key={i} className="flex items-center justify-between gap-3 px-5 py-4 text-sm">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
+                    <span>
+                      {relationName(v.products)} ({v.name})
+                    </span>
+                  </div>
+                  <span className="font-medium text-red-700">{v.stock_quantity} left</span>
+                </li>
+              ))}
+            </ul>
+          </AdminCard>
+        </div>
+      )}
 
       <div>
         <div className="mb-4 flex items-end justify-between">

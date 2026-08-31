@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { updateOrderFulfillment } from "@/actions/admin-orders";
+import { reverifyOrderPayment, updateOrderFulfillment } from "@/actions/admin-orders";
 import { formatNaira, FULFILLMENT_STEPS } from "@/lib/utils";
 import type { FulfillmentStatus } from "@/types";
+import Link from "next/link";
 
 interface OrderDetailProps {
   order: {
@@ -19,6 +19,8 @@ interface OrderDetailProps {
     total: number;
     subtotal: number;
     shipping_fee: number;
+    discount?: number;
+    promo_code?: string | null;
     payment_status: string;
     fulfillment_status: FulfillmentStatus;
     shipping_state: string;
@@ -41,6 +43,7 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
   const [status, setStatus] = useState(order.fulfillment_status);
   const [notes, setNotes] = useState(order.admin_notes ?? "");
   const [loading, setLoading] = useState(false);
+  const [reverifying, setReverifying] = useState(false);
 
   async function handleUpdate() {
     setLoading(true);
@@ -49,7 +52,22 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
     result.error ? toast.error(result.error) : toast.success("Order updated");
   }
 
+  async function handleReverify() {
+    setReverifying(true);
+    const result = await reverifyOrderPayment(order.id);
+    setReverifying(false);
+    if (result.error) {
+      toast.error(result.error);
+    } else if (result.alreadyProcessed) {
+      toast.info("Payment was already confirmed");
+    } else {
+      toast.success("Payment verified and order fulfilled");
+      window.location.reload();
+    }
+  }
+
   const stepIndex = FULFILLMENT_STEPS.findIndex((s) => s.key === order.fulfillment_status);
+  const isPendingPayment = order.payment_status === "PENDING";
 
   return (
     <div className="space-y-8">
@@ -61,12 +79,37 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
         <Link href="/admin/orders" className="shrink-0 text-sm text-[var(--plum)] underline">← Back</Link>
       </div>
 
+      {isPendingPayment && (
+        <div className="border border-amber-200 bg-amber-50 p-4 text-sm">
+          <p className="font-medium text-amber-900">Payment pending</p>
+          <p className="mt-1 text-amber-800">
+            Customer paid on Paystack but verification may have failed. Re-verify to fulfill stuck orders.
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            onClick={handleReverify}
+            disabled={reverifying}
+          >
+            {reverifying ? "Verifying…" : "Re-verify payment"}
+          </Button>
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         <div className="border bg-white p-6">
           <h2 className="font-display text-lg">Order Summary</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatNaira(order.subtotal)}</dd></div>
             <div className="flex justify-between"><dt>Shipping</dt><dd>{formatNaira(order.shipping_fee)}</dd></div>
+            {(order.discount ?? 0) > 0 && (
+              <div className="flex justify-between text-green-700">
+                <dt>Discount{order.promo_code ? ` (${order.promo_code})` : ""}</dt>
+                <dd>−{formatNaira(order.discount!)}</dd>
+              </div>
+            )}
             <div className="flex justify-between font-medium"><dt>Total</dt><dd>{formatNaira(order.total)}</dd></div>
             <div className="flex justify-between"><dt>Payment</dt><dd>{order.payment_status}</dd></div>
           </dl>

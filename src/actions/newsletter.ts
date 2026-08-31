@@ -2,6 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/admin";
 import { newsletterSchema } from "@/lib/validations";
+import { newsletterWelcomeEmail, sendTemplatedEmail } from "@/lib/email";
 
 export async function subscribeNewsletter(email: string) {
   const parsed = newsletterSchema.safeParse({ email });
@@ -19,6 +20,8 @@ export async function subscribeNewsletter(email: string) {
     if (error.code === "23505") return { error: "You are already subscribed" };
     return { error: "Unable to subscribe. Please try again." };
   }
+
+  await sendTemplatedEmail(parsed.data.email, newsletterWelcomeEmail());
 
   return { success: true };
 }

@@ -16,6 +16,8 @@ import {
   LogOut,
   Menu,
   X,
+  Tag,
+  Star,
   Newspaper,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +31,8 @@ const LINKS = [
   { href: "/admin/payments", label: "Payments", icon: CreditCard },
   { href: "/admin/shipping", label: "Shipping", icon: Truck },
   { href: "/admin/contacts", label: "Contacts", icon: Mail },
+  { href: "/admin/promo-codes", label: "Promo codes", icon: Tag },
+  { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/newsletter", label: "Newsletter", icon: Newspaper },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;

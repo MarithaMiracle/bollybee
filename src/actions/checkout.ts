@@ -2,10 +2,84 @@
 
 import { createServiceClient } from "@/lib/supabase/admin";
 import { validateCart, getShippingFee } from "@/lib/commerce/cart";
+import { calculatePromoDiscount, incrementPromoUsage } from "@/lib/commerce/promo";
 import { checkoutSchema, cartSchema } from "@/lib/validations";
 import { calculateOrderTotal, nairaToKobo } from "@/lib/money";
 import { generatePaymentReference, initializeTransaction } from "@/lib/paystack";
+import {
+  adminNewOrderEmail,
+  orderConfirmationEmail,
+  sendTemplatedEmail,
+} from "@/lib/email";
+import { markAbandonedCartRecovered } from "@/actions/abandoned-cart";
 import type { CartItem, ValidatedCartItem } from "@/types";
+
+export type CheckoutFormDefaults = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  shippingState: string;
+  shippingLga: string;
+  shippingCity: string;
+  shippingAddress: string;
+  shippingLandmark: string;
+  shippingPostalCode: string;
+};
+
+function splitFullName(fullName: string | null | undefined) {
+  const parts = (fullName ?? "").trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+/** Prefill checkout from the signed-in user's profile and most recent order. */
+export async function getCheckoutDefaults(): Promise<CheckoutFormDefaults | null> {
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return null;
+
+  const [{ data: profile }, { data: defaultAddress }, { data: lastOrder }] = await Promise.all([
+    supabase.from("profiles").select("full_name, phone").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("saved_addresses")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("is_default", true)
+      .maybeSingle(),
+    supabase
+      .from("orders")
+      .select(
+        "first_name, last_name, email, phone, shipping_state, shipping_lga, shipping_city, shipping_address, shipping_landmark, shipping_postal_code"
+      )
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const profileName = splitFullName(profile?.full_name);
+  const shipping = defaultAddress ?? lastOrder;
+
+  return {
+    firstName: defaultAddress?.first_name || lastOrder?.first_name || profileName.firstName,
+    lastName: defaultAddress?.last_name || lastOrder?.last_name || profileName.lastName,
+    email: lastOrder?.email || user.email || "",
+    phone: defaultAddress?.phone || lastOrder?.phone || profile?.phone || "",
+    shippingState: shipping?.shipping_state ?? "",
+    shippingLga: shipping?.shipping_lga ?? "",
+    shippingCity: shipping?.shipping_city ?? "",
+    shippingAddress: shipping?.shipping_address ?? "",
+    shippingLandmark: shipping?.shipping_landmark ?? "",
+    shippingPostalCode: shipping?.shipping_postal_code ?? "",
+  };
+}
 
 export async function initializeCheckout(
   cartItems: CartItem[],
@@ -42,13 +116,41 @@ export async function initializeCheckout(
     parsedCheckout.data.shippingState,
     parsedCheckout.data.shippingLga
   );
-  const total = calculateOrderTotal(subtotal, shippingFee, 0);
+
+  const promoInput = checkoutData.promoCode?.trim();
+  let discount = 0;
+  let appliedPromo: string | null = null;
+  if (promoInput) {
+    const promo = await calculatePromoDiscount(promoInput, subtotal);
+    if (promo.error) return { error: promo.error };
+    discount = promo.result!.discount;
+    appliedPromo = promo.result!.code;
+  }
+
+  const total = calculateOrderTotal(subtotal, shippingFee, discount);
 
   const supabase = createServiceClient();
 
   const { createClient } = await import("@/lib/supabase/server");
   const authClient = await createClient();
   const { data: { user } } = await authClient.auth.getUser();
+
+  if (checkoutData.saveAddress === "true" && user) {
+    await supabase.from("saved_addresses").insert({
+      user_id: user.id,
+      label: "Checkout",
+      first_name: parsedCheckout.data.firstName,
+      last_name: parsedCheckout.data.lastName,
+      phone: parsedCheckout.data.phone,
+      shipping_state: parsedCheckout.data.shippingState,
+      shipping_lga: parsedCheckout.data.shippingLga,
+      shipping_city: parsedCheckout.data.shippingCity,
+      shipping_address: parsedCheckout.data.shippingAddress,
+      shipping_landmark: parsedCheckout.data.shippingLandmark ?? null,
+      shipping_postal_code: parsedCheckout.data.shippingPostalCode ?? null,
+      is_default: false,
+    });
+  }
 
   const orderNum = `BB-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
@@ -63,7 +165,8 @@ export async function initializeCheckout(
       last_name: parsedCheckout.data.lastName,
       subtotal,
       shipping_fee: shippingFee,
-      discount: 0,
+      discount,
+      promo_code: appliedPromo,
       total,
       currency: "NGN",
       payment_status: "PENDING",
@@ -238,6 +341,46 @@ export async function verifyAndFulfillOrder(rawReference: string) {
     .select("*, order_items(*)")
     .eq("id", order.id)
     .single();
+
+  if (updatedOrder) {
+    const orderRow = updatedOrder as {
+      order_number: string;
+      first_name: string;
+      email: string;
+      total: number;
+      promo_code: string | null;
+      order_items: { product_name: string; quantity: number; total: number }[];
+    };
+
+    if (orderRow.promo_code) {
+      await incrementPromoUsage(orderRow.promo_code);
+    }
+
+    await markAbandonedCartRecovered(orderRow.email);
+
+    await sendTemplatedEmail(
+      orderRow.email,
+      orderConfirmationEmail({
+        orderNumber: orderRow.order_number,
+        firstName: orderRow.first_name,
+        total: orderRow.total,
+        email: orderRow.email,
+        items: orderRow.order_items.map((i) => ({
+          productName: i.product_name,
+          quantity: i.quantity,
+          total: i.total,
+        })),
+      })
+    );
+
+    const adminEmail = process.env.ADMIN_EMAIL;
+    if (adminEmail) {
+      await sendTemplatedEmail(
+        adminEmail,
+        adminNewOrderEmail(orderRow.order_number, orderRow.total)
+      );
+    }
+  }
 
   return { success: true, order: updatedOrder };
 }
