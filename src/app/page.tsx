@@ -209,7 +209,7 @@ export default async function HomePage() {
       )}
 
       {/* Brand story */}
-      <section className="border-y border-[var(--border)] bg-white py-20 md:py-28">
+      <section className="border-y border-[var(--border)] bg-[var(--satin-light)] py-20 md:py-28">
         <div className="mx-auto max-w-3xl px-4 text-center md:px-8">
           <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">Our Story</p>
           <h2 className="mt-4 font-display text-3xl md:text-5xl">Born from a passion for scent</h2>
