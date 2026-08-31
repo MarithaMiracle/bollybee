@@ -65,10 +65,31 @@ describe("checkout validation schema", () => {
 
 describe("webhook idempotency logic", () => {
   it("verifyWebhookSignature rejects missing signature when secret is set", async () => {
-    const prev = process.env.PAYSTACK_WEBHOOK_SECRET;
+    const prevWebhook = process.env.PAYSTACK_WEBHOOK_SECRET;
+    const prevSecret = process.env.PAYSTACK_SECRET_KEY;
     process.env.PAYSTACK_WEBHOOK_SECRET = "test-secret";
+    delete process.env.PAYSTACK_SECRET_KEY;
     const { verifyWebhookSignature } = await import("@/lib/paystack");
     expect(verifyWebhookSignature("{}", null)).toBe(false);
-    process.env.PAYSTACK_WEBHOOK_SECRET = prev;
+    process.env.PAYSTACK_WEBHOOK_SECRET = prevWebhook;
+    if (prevSecret) process.env.PAYSTACK_SECRET_KEY = prevSecret;
+  });
+
+  it("verifyWebhookSignature falls back to PAYSTACK_SECRET_KEY", async () => {
+    const prevWebhook = process.env.PAYSTACK_WEBHOOK_SECRET;
+    const prevSecret = process.env.PAYSTACK_SECRET_KEY;
+    delete process.env.PAYSTACK_WEBHOOK_SECRET;
+    process.env.PAYSTACK_SECRET_KEY = "sk_test_fallback";
+    const crypto = await import("crypto");
+    const payload = '{"event":"charge.success"}';
+    const signature = crypto
+      .createHmac("sha512", "sk_test_fallback")
+      .update(payload)
+      .digest("hex");
+    const { verifyWebhookSignature } = await import("@/lib/paystack");
+    expect(verifyWebhookSignature(payload, signature)).toBe(true);
+    process.env.PAYSTACK_WEBHOOK_SECRET = prevWebhook;
+    if (prevSecret) process.env.PAYSTACK_SECRET_KEY = prevSecret;
+    else delete process.env.PAYSTACK_SECRET_KEY;
   });
 });

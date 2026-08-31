@@ -136,9 +136,8 @@ In Vercel → Project → Settings → Environment Variables, set:
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key |
-| `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` | Paystack live public key |
-| `PAYSTACK_SECRET_KEY` | Paystack live secret key |
-| `PAYSTACK_WEBHOOK_SECRET` | From Paystack webhook settings |
+| `PAYSTACK_SECRET_KEY` | Paystack secret key (`sk_test_...` or `sk_live_...`) — also used to verify webhooks |
+| `PAYSTACK_WEBHOOK_SECRET` | Optional — leave empty; Paystack has no separate webhook secret |
 
 Also configure:
 

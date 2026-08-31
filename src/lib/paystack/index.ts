@@ -81,9 +81,11 @@ export function verifyWebhookSignature(
   payload: string,
   signature: string | null
 ): boolean {
-  const secret = process.env.PAYSTACK_WEBHOOK_SECRET;
+  // Paystack signs webhooks with your secret key (sk_test_ / sk_live_), not a separate secret.
+  // PAYSTACK_WEBHOOK_SECRET is optional — falls back to PAYSTACK_SECRET_KEY.
+  const secret =
+    process.env.PAYSTACK_WEBHOOK_SECRET || process.env.PAYSTACK_SECRET_KEY;
   if (!secret) {
-    // Allow without secret in development until webhook secret is configured
     if (process.env.NODE_ENV === "production") return false;
     return true;
   }
