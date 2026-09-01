@@ -11,6 +11,7 @@
     "test": "vitest run",
     "verify:setup": "node scripts/verify-setup.mjs",
     "test:email": "node scripts/test-email.mjs",
+    "setup:hooks": "git config core.hooksPath .githooks && chmod +x .githooks/prepare-commit-msg",
     "db:seed": "node scripts/run-seed.mjs",
     "db:migrate": "node scripts/run-migration.mjs",
     "db:lgas": "node scripts/generate-lga-migration.mjs",

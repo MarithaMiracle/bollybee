@@ -1,0 +1,12 @@
+#!/bin/sh
+# Strip Cursor agent attribution from commit messages (IDE/CLI may re-add it).
+MSG_FILE="$1"
+[ -f "$MSG_FILE" ] || exit 0
+
+tmp="$(mktemp)"
+grep -v '^Co-authored-by: Cursor <cursoragent@cursor.com>$' "$MSG_FILE" | \
+grep -v '^Co-authored-by: Cursor Agent <cursoragent@cursor.com>$' | \
+grep -v '^Made-with: Cursor$' | \
+grep -v '^Made with Cursor$' > "$tmp"
+mv "$tmp" "$MSG_FILE"
+exit 0
