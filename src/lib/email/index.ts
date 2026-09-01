@@ -30,15 +30,18 @@ export async function sendTemplatedEmail(
   const recipient = resolveEmailRecipient(to);
 
   try {
-    const { error } = await client.emails.send({
+    const { data, error } = await client.emails.send({
       from,
       to: recipient,
       subject: template.subject,
       html: template.html,
     });
     if (error) {
-      console.error("[email] Resend error:", error);
+      console.error("[email] Resend error:", JSON.stringify(error));
       return false;
+    }
+    if (process.env.NODE_ENV !== "production") {
+      console.info("[email] Sent", template.subject, "→", recipient, data?.id ?? "");
     }
     return true;
   } catch (e) {

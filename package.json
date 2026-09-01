@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "verify:setup": "node scripts/verify-setup.mjs",
+    "test:email": "node scripts/test-email.mjs",
     "db:seed": "node scripts/run-seed.mjs",
     "db:migrate": "node scripts/run-migration.mjs",
     "db:stock-images": "node scripts/apply-stock-images.mjs",
