@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     .is("reminder_sent_at", null)
     .is("recovered_at", null)
     .lt("updated_at", oneHourAgo)
-    .limit(50);
+    .limit(10);
 
   let sent = 0;
   for (const cart of carts ?? []) {
@@ -37,6 +37,8 @@ export async function GET(req: NextRequest) {
         .update({ reminder_sent_at: new Date().toISOString() })
         .eq("id", cart.id);
       sent++;
+      // Avoid Resend burst rate limits on free tier
+      await new Promise((r) => setTimeout(r, 200));
     }
   }
 

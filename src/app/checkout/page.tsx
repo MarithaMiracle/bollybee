@@ -211,19 +211,30 @@ export default function CheckoutPage() {
               </div>
               <div>
                 <Label htmlFor="lga">LGA</Label>
-                <select
-                  id="lga"
-                  required
-                  value={form.shippingLga}
-                  onChange={(e) => setForm({ ...form, shippingLga: e.target.value })}
-                  className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
-                  disabled={!form.shippingState}
-                >
-                  <option value="">Select LGA</option>
-                  {lgas.map((l) => (
-                    <option key={l.id} value={l.name}>{l.name}</option>
-                  ))}
-                </select>
+                {lgas.length > 0 ? (
+                  <select
+                    id="lga"
+                    required
+                    value={form.shippingLga}
+                    onChange={(e) => setForm({ ...form, shippingLga: e.target.value })}
+                    className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
+                    disabled={!form.shippingState}
+                  >
+                    <option value="">Select LGA</option>
+                    {lgas.map((l) => (
+                      <option key={l.id} value={l.name}>{l.name}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    id="lga"
+                    required
+                    placeholder={form.shippingState ? "Enter your LGA" : "Select a state first"}
+                    value={form.shippingLga}
+                    onChange={(e) => setForm({ ...form, shippingLga: e.target.value })}
+                    disabled={!form.shippingState}
+                  />
+                )}
               </div>
               <div>
                 <Label htmlFor="city">City</Label>

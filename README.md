@@ -144,6 +144,27 @@ Also configure:
 - **Paystack webhook URL:** `https://bollybee.vercel.app/api/payments/paystack/webhook`
 - **Supabase Auth redirect URLs:** add `https://bollybee.vercel.app/**` under Authentication → URL configuration
 
+### Supabase Auth emails vs Bollybee (Resend) emails
+
+These are **two separate email systems**:
+
+| System | Sends | Default limit |
+|--------|--------|----------------|
+| **Supabase Auth** (built-in SMTP) | Signup confirmation, password reset, magic links | **2 emails/hour** per project |
+| **Bollybee app** (Resend API) | Welcome, order confirm, newsletter, contact ack, etc. | Resend free tier (100/day) |
+
+If signup shows **"Email rate limit exceeded"**, that is **Supabase Auth**, not Resend — even after 1–2 test signups.
+
+**Fix (recommended):** Connect Resend as Supabase custom SMTP:
+
+1. [Supabase → Authentication → SMTP](https://supabase.com/dashboard/project/ngmpilqvgkwebjrqsogq/auth/smtp)
+2. Enable custom SMTP
+3. Host: `smtp.resend.com` · Port: `465` · User: `resend` · Password: your `RESEND_API_KEY`
+4. Sender: `Bollybee <onboarding@resend.dev>` (test) or your verified domain later
+5. After saving, raise **Authentication → Rate limits → Email sent** (e.g. 30/hour)
+
+**Quick dev workaround:** Authentication → Providers → Email → turn off **Confirm email** so signup does not trigger Supabase emails (Bollybee’s Resend welcome still sends).
+
 `NEXT_PUBLIC_APP_URL` drives SEO metadata, sitemap, robots.txt, and Paystack checkout callbacks — set it in Vercel for production builds.
 
 ## License

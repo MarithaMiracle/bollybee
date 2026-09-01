@@ -9,10 +9,18 @@ function getResend() {
 }
 
 /** Resend test sender only delivers to verified addresses — redirect when using onboarding@resend.dev */
-export function resolveEmailRecipient(to: string): string {
+export function isResendTestMode(): boolean {
   const from = process.env.EMAIL_FROM ?? "";
-  const testTo = process.env.RESEND_TEST_TO;
-  if (testTo && from.includes("resend.dev")) return testTo;
+  return from.includes("resend.dev") && Boolean(process.env.RESEND_TEST_TO);
+}
+
+export function getResendTestInbox(): string | undefined {
+  return isResendTestMode() ? process.env.RESEND_TEST_TO : undefined;
+}
+
+export function resolveEmailRecipient(to: string): string {
+  const testTo = getResendTestInbox();
+  if (testTo) return testTo;
   return to;
 }
 
@@ -38,11 +46,13 @@ export async function sendTemplatedEmail(
     });
     if (error) {
       console.error("[email] Resend error:", JSON.stringify(error));
+      const msg = String(error.message ?? error);
+      if (msg.includes("rate_limit") || msg.includes("quota")) {
+        console.error("[email] Resend quota/rate limit hit — free tier is 100 emails/day");
+      }
       return false;
     }
-    if (process.env.NODE_ENV !== "production") {
-      console.info("[email] Sent", template.subject, "→", recipient, data?.id ?? "");
-    }
+    console.info("[email] Sent", template.subject, "→", recipient, data?.id ?? "");
     return true;
   } catch (e) {
     console.error("[email] Send failed:", e);

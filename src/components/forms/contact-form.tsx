@@ -22,8 +22,15 @@ export function ContactForm({ className }: ContactFormProps) {
     const result = await submitContact(new FormData(e.currentTarget));
     setLoading(false);
     if (result.error) toast.error(result.error);
-    else {
-      toast.success("Message sent! We will respond shortly.");
+    else if (result.success) {
+      if (result.emailSent && result.testInbox) {
+        toast.success(`Message sent! Confirmation email delivered to ${result.testInbox} (test mode).`);
+      } else if (result.emailSent) {
+        toast.success("Message sent! We will respond shortly.");
+      } else {
+        toast.success("Message saved!");
+        toast.warning("Acknowledgement email could not be sent — check Resend env vars.");
+      }
       e.currentTarget.reset();
     }
   }

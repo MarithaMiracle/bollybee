@@ -124,18 +124,28 @@ export function AddressManager({
             </div>
             <div>
               <Label htmlFor="shippingLga">LGA</Label>
-              <select
-                id="shippingLga"
-                name="shippingLga"
-                required
-                className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
-                disabled={!selectedState}
-              >
-                <option value="">Select LGA</option>
-                {lgas.map((l) => (
-                  <option key={l.id} value={l.name}>{l.name}</option>
-                ))}
-              </select>
+              {lgas.length > 0 ? (
+                <select
+                  id="shippingLga"
+                  name="shippingLga"
+                  required
+                  className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
+                  disabled={!selectedState}
+                >
+                  <option value="">Select LGA</option>
+                  {lgas.map((l) => (
+                    <option key={l.id} value={l.name}>{l.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <Input
+                  id="shippingLga"
+                  name="shippingLga"
+                  required
+                  placeholder={selectedState ? "Enter your LGA" : "Select a state first"}
+                  disabled={!selectedState}
+                />
+              )}
             </div>
             <div>
               <Label htmlFor="shippingCity">City</Label>

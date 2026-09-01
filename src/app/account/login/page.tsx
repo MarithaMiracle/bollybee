@@ -37,8 +37,21 @@ export default function AccountLoginPage() {
         const result = await signUp(formData);
         if (result?.error) {
           toast.error(result.error);
+        } else if (result.emailSent && result.testInbox) {
+          toast.success(
+            `Account created! Welcome email sent to ${result.testInbox} (Resend test mode — not your signup address).`
+          );
+          router.push("/account/orders");
+          router.refresh();
+        } else if (result.emailSent) {
+          toast.success("Account created! Check your email for a welcome message.");
+          router.push("/account/orders");
+          router.refresh();
         } else {
           toast.success("Account created!");
+          toast.warning(
+            "Welcome email could not be sent. Restart the dev server if you just added Resend keys, or check Vercel env vars."
+          );
           router.push("/account/orders");
           router.refresh();
         }

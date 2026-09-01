@@ -2,7 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/admin";
 import { contactSchema } from "@/lib/validations";
-import { contactAcknowledgementEmail, sendTemplatedEmail } from "@/lib/email";
+import { contactAcknowledgementEmail, sendTemplatedEmail, getResendTestInbox } from "@/lib/email";
 
 export async function submitContact(formData: FormData) {
   const raw = {
@@ -23,7 +23,10 @@ export async function submitContact(formData: FormData) {
 
   if (error) return { error: "Unable to send message. Please try again." };
 
-  await sendTemplatedEmail(parsed.data.email, contactAcknowledgementEmail(parsed.data.name));
+  const emailSent = await sendTemplatedEmail(
+    parsed.data.email,
+    contactAcknowledgementEmail(parsed.data.name)
+  );
 
-  return { success: true };
+  return { success: true, emailSent, testInbox: getResendTestInbox() };
 }

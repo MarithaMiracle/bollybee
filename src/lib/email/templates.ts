@@ -6,7 +6,18 @@ const BRAND = {
   muted: "#6b6560",
 };
 
+function appUrl() {
+  return (process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app").replace(/\/$/, "");
+}
+
+function logoUrl() {
+  return `${appUrl()}/brand/bollybee-mark.png`;
+}
+
 export function emailLayout(content: string, preheader = "") {
+  const home = appUrl();
+  const logo = logoUrl();
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,8 +32,12 @@ export function emailLayout(content: string, preheader = "") {
       <td align="center">
         <table width="100%" style="max-width:560px;background:#ffffff;border:1px solid #e5ddd4;">
           <tr>
-            <td style="padding:28px 32px 16px;text-align:center;border-bottom:1px solid #e5ddd4;">
-              <p style="margin:0;font-size:11px;letter-spacing:0.35em;text-transform:uppercase;color:${BRAND.muted};">Bollybee Fragrance Lab</p>
+            <td style="padding:28px 32px 20px;text-align:center;border-bottom:1px solid #e5ddd4;">
+              <a href="${home}" style="text-decoration:none;display:inline-block;">
+                <img src="${logo}" alt="Bollybee" width="46" height="56" style="display:block;margin:0 auto 10px;border:0;outline:none;" />
+                <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;letter-spacing:0.04em;color:${BRAND.plum};">Bollybee</p>
+              </a>
+              <p style="margin:8px 0 0;font-family:Inter,Arial,sans-serif;font-size:11px;letter-spacing:0.35em;text-transform:uppercase;color:${BRAND.muted};">Fragrance Lab</p>
             </td>
           </tr>
           <tr>
@@ -33,7 +48,7 @@ export function emailLayout(content: string, preheader = "") {
           <tr>
             <td style="padding:20px 32px 28px;text-align:center;border-top:1px solid #e5ddd4;font-family:Inter,Arial,sans-serif;font-size:12px;color:${BRAND.muted};">
               <p style="margin:0 0 8px;">Soft luxury, bottled.</p>
-              <p style="margin:0;"><a href="https://bollybee.vercel.app" style="color:${BRAND.plum};">bollybee.vercel.app</a></p>
+              <p style="margin:0;"><a href="${home}" style="color:${BRAND.plum};">${home.replace(/^https?:\/\//, "")}</a></p>
             </td>
           </tr>
         </table>

@@ -2,7 +2,7 @@
 
 import { createServiceClient } from "@/lib/supabase/admin";
 import { newsletterSchema } from "@/lib/validations";
-import { newsletterWelcomeEmail, sendTemplatedEmail } from "@/lib/email";
+import { newsletterWelcomeEmail, sendTemplatedEmail, getResendTestInbox } from "@/lib/email";
 
 export async function subscribeNewsletter(email: string) {
   const parsed = newsletterSchema.safeParse({ email });
@@ -11,6 +11,17 @@ export async function subscribeNewsletter(email: string) {
   }
 
   const supabase = createServiceClient();
+
+  const { data: existing } = await supabase
+    .from("newsletter_subscribers")
+    .select("status")
+    .eq("email", parsed.data.email)
+    .maybeSingle();
+
+  if (existing?.status === "SUBSCRIBED") {
+    return { error: "You are already subscribed" };
+  }
+
   const { error } = await supabase.from("newsletter_subscribers").upsert(
     { email: parsed.data.email, status: "SUBSCRIBED", subscribed_at: new Date().toISOString() },
     { onConflict: "email" }
@@ -21,7 +32,7 @@ export async function subscribeNewsletter(email: string) {
     return { error: "Unable to subscribe. Please try again." };
   }
 
-  await sendTemplatedEmail(parsed.data.email, newsletterWelcomeEmail());
+  const emailSent = await sendTemplatedEmail(parsed.data.email, newsletterWelcomeEmail());
 
-  return { success: true };
+  return { success: true, emailSent, testInbox: getResendTestInbox() };
 }

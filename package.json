@@ -13,6 +13,7 @@
     "test:email": "node scripts/test-email.mjs",
     "db:seed": "node scripts/run-seed.mjs",
     "db:migrate": "node scripts/run-migration.mjs",
+    "db:lgas": "node scripts/generate-lga-migration.mjs",
     "db:stock-images": "node scripts/apply-stock-images.mjs",
     "db:hero": "node scripts/set-hero-image.mjs",
     "db:about": "node scripts/set-about-image.mjs"

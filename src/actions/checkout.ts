@@ -308,7 +308,7 @@ export async function verifyAndFulfillOrder(rawReference: string) {
     return { error: "Payment amount mismatch" };
   }
 
-  await supabase
+  const { data: paymentRows } = await supabase
     .from("payments")
     .update({
       status: "SUCCESSFUL",
@@ -318,7 +318,18 @@ export async function verifyAndFulfillOrder(rawReference: string) {
       updated_at: new Date().toISOString(),
     })
     .eq("reference", payment.reference)
-    .eq("status", "PENDING");
+    .eq("status", "PENDING")
+    .select("id");
+
+  // Webhook + success page can race — only fulfill once
+  if (!paymentRows?.length) {
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("id", order.id)
+      .single();
+    return { success: true, order: existingOrder, alreadyProcessed: true };
+  }
 
   await supabase
     .from("orders")

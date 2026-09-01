@@ -17,8 +17,15 @@ export function NewsletterForm() {
     setLoading(false);
     if (result.error) {
       toast.error(result.error);
-    } else {
-      toast.success("Welcome to the Bollybee Circle!");
+    } else if (result.success) {
+      if (result.emailSent && result.testInbox) {
+        toast.success(`Welcome to the Bollybee Circle! Email sent to ${result.testInbox} (test mode).`);
+      } else if (result.emailSent) {
+        toast.success("Welcome to the Bollybee Circle! Check your inbox.");
+      } else {
+        toast.success("Subscribed!");
+        toast.warning("Welcome email could not be sent — check Resend env vars.");
+      }
       setEmail("");
     }
   }
