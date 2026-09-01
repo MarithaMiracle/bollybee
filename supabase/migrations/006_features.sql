@@ -108,14 +108,28 @@ CREATE POLICY "Anyone read active promo codes" ON promo_codes
 CREATE POLICY "Admin manage promo codes" ON promo_codes
   FOR ALL USING (is_admin());
 
-CREATE POLICY "Service role abandoned carts" ON abandoned_carts
-  FOR ALL USING (TRUE);
-
-CREATE POLICY "Users upsert own abandoned cart" ON abandoned_carts
+CREATE POLICY "Users insert guest abandoned cart" ON abandoned_carts
   FOR INSERT WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
 
 CREATE POLICY "Admin read addresses" ON saved_addresses
   FOR SELECT USING (is_admin());
+
+-- Table grants (required for authenticated API access)
+GRANT SELECT, INSERT, UPDATE, DELETE ON saved_addresses TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON wishlist_items TO authenticated;
+GRANT SELECT, INSERT ON product_reviews TO authenticated;
+GRANT SELECT ON promo_codes TO authenticated, anon;
+
+-- Backfill profiles for auth users missing a profile row (FK target for wishlist/addresses)
+INSERT INTO profiles (id, full_name, role)
+SELECT
+  u.id,
+  COALESCE(u.raw_user_meta_data->>'full_name', ''),
+  'CUSTOMER'::user_role
+FROM auth.users u
+LEFT JOIN profiles p ON p.id = u.id
+WHERE p.id IS NULL
+ON CONFLICT (id) DO NOTHING;
 
 CREATE TRIGGER saved_addresses_updated_at
   BEFORE UPDATE ON saved_addresses FOR EACH ROW EXECUTE FUNCTION update_updated_at();

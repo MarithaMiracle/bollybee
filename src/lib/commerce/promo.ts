@@ -14,12 +14,16 @@ export async function calculatePromoDiscount(
   if (!normalized) return { error: "Enter a promo code" };
 
   const supabase = createServiceClient();
-  const { data: promo } = await supabase
+  const { data: promo, error: promoError } = await supabase
     .from("promo_codes")
     .select("*")
     .eq("code", normalized)
     .eq("active", true)
     .maybeSingle();
+
+  if (promoError?.message?.includes("Could not find the table")) {
+    return { error: "Promo codes are not set up yet. Run migration 006 in the Supabase SQL Editor." };
+  }
 
   if (!promo) return { error: "Invalid promo code" };
 

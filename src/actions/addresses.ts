@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ensureCustomerProfile, formatFeatureError } from "@/lib/auth/ensure-profile";
 import { z } from "zod";
 
 const addressSchema = z.object({
@@ -43,6 +44,11 @@ export async function saveAddress(formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid address" };
   }
 
+  const profile = await ensureCustomerProfile(supabase, user);
+  if (!profile.ok) {
+    return { error: formatFeatureError({ message: profile.error }, "addresses") };
+  }
+
   if (parsed.data.isDefault) {
     await supabase
       .from("saved_addresses")
@@ -65,7 +71,7 @@ export async function saveAddress(formData: FormData) {
     is_default: parsed.data.isDefault ?? false,
   });
 
-  if (error) return { error: "Unable to save address" };
+  if (error) return { error: formatFeatureError(error, "addresses") };
   revalidatePath("/account/addresses");
   return { success: true };
 }

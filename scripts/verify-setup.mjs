@@ -32,7 +32,18 @@ if (!url || !key) {
 
 const supabase = createClient(url, key);
 
-const tables = ["products", "categories", "orders", "states", "shipping_rates"];
+const tables = [
+  "products",
+  "categories",
+  "orders",
+  "states",
+  "shipping_rates",
+  "wishlist_items",
+  "saved_addresses",
+  "product_reviews",
+  "promo_codes",
+  "abandoned_carts",
+];
 
 console.log("Checking Supabase connection...\n");
 
@@ -55,6 +66,8 @@ if (!ok) {
   console.log("   1. supabase/migrations/001_schema.sql");
   console.log("   2. supabase/migrations/002_seed.sql");
   console.log("   3. supabase/migrations/003_storage.sql");
+  console.log("   4. supabase/migrations/006_features.sql  ← wishlist, reviews, promos, addresses");
+  console.log("\n   Dashboard: https://supabase.com/dashboard/project/_/sql/new");
   process.exit(1);
 }
 

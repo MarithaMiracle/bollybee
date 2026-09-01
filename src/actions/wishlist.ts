@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { ensureCustomerProfile, formatFeatureError } from "@/lib/auth/ensure-profile";
 
 export async function toggleWishlist(productId: string) {
   const supabase = await createClient();
@@ -11,6 +12,11 @@ export async function toggleWishlist(productId: string) {
 
   if (!user) return { error: "Sign in to save to your wishlist", requiresAuth: true };
 
+  const profile = await ensureCustomerProfile(supabase, user);
+  if (!profile.ok) {
+    return { error: formatFeatureError({ message: profile.error }, "wishlist") };
+  }
+
   const { data: existing } = await supabase
     .from("wishlist_items")
     .select("id")
@@ -19,8 +25,10 @@ export async function toggleWishlist(productId: string) {
     .maybeSingle();
 
   if (existing) {
-    await supabase.from("wishlist_items").delete().eq("id", existing.id);
+    const { error } = await supabase.from("wishlist_items").delete().eq("id", existing.id);
+    if (error) return { error: formatFeatureError(error, "wishlist") };
     revalidatePath("/account/wishlist");
+    revalidatePath("/product");
     return { success: true, added: false };
   }
 
@@ -29,8 +37,9 @@ export async function toggleWishlist(productId: string) {
     product_id: productId,
   });
 
-  if (error) return { error: "Unable to update wishlist" };
+  if (error) return { error: formatFeatureError(error, "wishlist") };
   revalidatePath("/account/wishlist");
+  revalidatePath("/product");
   return { success: true, added: true };
 }
 

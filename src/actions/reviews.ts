@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { ensureCustomerProfile, formatFeatureError } from "@/lib/auth/ensure-profile";
 import { z } from "zod";
 
 const reviewSchema = z.object({
@@ -37,6 +38,11 @@ export async function submitReview(formData: FormData) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid review" };
   }
 
+  const profileCheck = await ensureCustomerProfile(supabase, user);
+  if (!profileCheck.ok) {
+    return { error: formatFeatureError({ message: profileCheck.error }, "reviews") };
+  }
+
   const authorName =
     profile?.full_name?.trim() ||
     (user.user_metadata?.full_name as string | undefined) ||
@@ -53,7 +59,7 @@ export async function submitReview(formData: FormData) {
     approved: false,
   });
 
-  if (error) return { error: "Unable to submit review" };
+  if (error) return { error: formatFeatureError(error, "reviews") };
   revalidatePath(`/product/${formData.get("productSlug")}`);
   return { success: true, message: "Review submitted for approval" };
 }
