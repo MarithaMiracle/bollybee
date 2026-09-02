@@ -1,3 +1,4 @@
+import { FILIGREE_VIEWBOX, RIBBON_PATH } from "@/components/layout/filigree-shared";
 import {
   CONTACT_EMAIL,
   CONTACT_LOCATION,
@@ -10,7 +11,15 @@ const BRAND = {
   background: "#faf8f5",
   foreground: "#1a1816",
   muted: "#6b6560",
+  border: "#e5ddd4",
 };
+
+/** Matches site --radius-lg / --radius tokens */
+const RADIUS = {
+  card: "16px",
+  box: "12px",
+  button: "12px",
+} as const;
 
 interface EmailLayoutOptions {
   /** When false, footer omits email (use when body already includes it). */
@@ -19,6 +28,25 @@ interface EmailLayoutOptions {
 
 function logoUrl() {
   return `${emailPublicBaseUrl()}/brand/bollybee-mark.png`;
+}
+
+/** Plum filigree wave — same path as site FiligreeRule */
+function plumDivider(margin = "0") {
+  const { w, h } = FILIGREE_VIEWBOX;
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:${margin};">
+    <tr>
+      <td align="center" style="padding:4px 24px;line-height:0;font-size:0;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="18" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" role="presentation" aria-hidden="true" style="display:block;max-width:420px;margin:0 auto;">
+          <path d="${RIBBON_PATH}" fill="none" stroke="${BRAND.plum}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>
+        </svg>
+      </td>
+    </tr>
+  </table>`;
+}
+
+function emailTitle(text: string) {
+  return `<h1 style="margin:0;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">${text}</h1>
+    ${plumDivider("0 0 16px")}`;
 }
 
 function emailContactFooter(includeEmail: boolean) {
@@ -52,9 +80,9 @@ export function emailLayout(
   <table width="100%" cellpadding="0" cellspacing="0" style="background:${BRAND.background};padding:32px 16px;">
     <tr>
       <td align="center">
-        <table width="100%" style="max-width:560px;background:#ffffff;border:1px solid #e5ddd4;">
+        <table width="100%" style="max-width:560px;background:#ffffff;border:1px solid ${BRAND.border};border-radius:${RADIUS.card};border-collapse:separate;border-spacing:0;overflow:hidden;">
           <tr>
-            <td style="padding:28px 32px 20px;text-align:center;border-bottom:1px solid #e5ddd4;">
+            <td style="padding:28px 32px 16px;text-align:center;">
               <a href="${home}" style="text-decoration:none;display:inline-block;">
                 <img src="${logo}" alt="Bollybee" width="46" height="56" style="display:block;margin:0 auto 10px;border:0;outline:none;" />
                 <p style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:24px;letter-spacing:0.04em;color:${BRAND.plum};">Bollybee</p>
@@ -63,12 +91,18 @@ export function emailLayout(
             </td>
           </tr>
           <tr>
-            <td style="padding:32px;font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.6;">
+            <td style="padding:0 32px;">${plumDivider()}</td>
+          </tr>
+          <tr>
+            <td style="padding:28px 32px 32px;font-family:Inter,Arial,sans-serif;font-size:15px;line-height:1.6;">
               ${content}
             </td>
           </tr>
           <tr>
-            <td style="padding:20px 32px 28px;text-align:center;border-top:1px solid #e5ddd4;font-family:Inter,Arial,sans-serif;font-size:12px;color:${BRAND.muted};">
+            <td style="padding:0 32px;">${plumDivider()}</td>
+          </tr>
+          <tr>
+            <td style="padding:20px 32px 28px;text-align:center;font-family:Inter,Arial,sans-serif;font-size:12px;color:${BRAND.muted};">
               <p style="margin:0 0 8px;">Soft luxury, bottled.</p>
               <p style="margin:0;"><a href="${home}" style="color:${BRAND.plum};">${SITE_DOMAIN}</a></p>
               ${emailContactFooter(includeFooterEmail)}
@@ -82,21 +116,39 @@ export function emailLayout(
 </html>`;
 }
 
-function button(href: string, label: string) {
-  return `<p style="margin:28px 0 0;text-align:center;">
-    <a href="${href}" style="display:inline-block;background:${BRAND.plum};color:#faf8f5;text-decoration:none;padding:14px 28px;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;">${label}</a>
+function button(
+  href: string,
+  label: string,
+  options: { divider?: boolean; marginTop?: string } = {}
+) {
+  const { divider = true, marginTop = "24px 0 0" } = options;
+  const dividerHtml = divider ? plumDivider(marginTop) : "";
+  const linkMargin = divider ? "20px 0 0" : marginTop;
+
+  return `${dividerHtml}<p style="margin:${linkMargin};text-align:center;">
+    <a href="${href}" style="display:inline-block;background:${BRAND.plum};color:#faf8f5;text-decoration:none;padding:14px 28px;font-size:13px;letter-spacing:0.12em;text-transform:uppercase;border-radius:${RADIUS.button};">${label}</a>
   </p>`;
+}
+
+function dataTable(rows: string) {
+  return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin:0 0 4px;border:1px solid ${BRAND.border};border-radius:${RADIUS.box};border-collapse:separate;border-spacing:0;overflow:hidden;">
+    <tr>
+      <td style="padding:12px 16px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">${rows}</table>
+      </td>
+    </tr>
+  </table>`;
 }
 
 export function welcomeEmail(firstName: string) {
   return {
     subject: "Welcome to Bollybee",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Welcome, ${firstName}</h1>
+      `${emailTitle(`Welcome, ${firstName}`)}
       <p style="margin:0 0 16px;color:${BRAND.muted};">Thank you for joining Bollybee. Discover premium fragrances crafted for confidence, warmth, and modern Nigerian luxury.</p>
       <p style="margin:0;">Your account lets you track orders, save addresses, and build your wishlist.</p>
       ${button(`${SITE_URL}/shop`, "Shop fragrances")}
-      ${button(`${SITE_URL}/sample-packs`, "Try sample packs")}`,
+      ${button(`${SITE_URL}/sample-packs`, "Try sample packs", { divider: false, marginTop: "12px 0 0" })}`,
       `Welcome to Bollybee, ${firstName}`
     ),
   };
@@ -106,7 +158,7 @@ export function passwordResetEmail(resetLink: string) {
   return {
     subject: "Reset your Bollybee password",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Reset your password</h1>
+      `${emailTitle("Reset your password")}
       <p style="margin:0 0 16px;color:${BRAND.muted};">We received a request to reset the password for your Bollybee account. Click the button below to choose a new password.</p>
       <p style="margin:0 0 16px;color:${BRAND.muted};">This link expires after a short time. If you didn&apos;t request a reset, you can safely ignore this email, your password won&apos;t change.</p>
       ${button(resetLink, "Reset password")}
@@ -128,8 +180,8 @@ export function orderConfirmationEmail(order: {
     .map(
       (i) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #e5ddd4;">${i.productName} × ${i.quantity}</td>
-          <td style="padding:8px 0;border-bottom:1px solid #e5ddd4;text-align:right;">₦${i.total.toLocaleString()}</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};">${i.productName} × ${i.quantity}</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};text-align:right;">₦${i.total.toLocaleString()}</td>
         </tr>`
     )
     .join("");
@@ -137,15 +189,13 @@ export function orderConfirmationEmail(order: {
   return {
     subject: `Order confirmed — ${order.orderNumber}`,
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Thank you, ${order.firstName}</h1>
+      `${emailTitle(`Thank you, ${order.firstName}`)}
       <p style="margin:0 0 20px;color:${BRAND.muted};">Your payment was successful. We're preparing your order <strong>${order.orderNumber}</strong>.</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 16px;font-size:14px;">
-        ${itemsHtml}
+      ${dataTable(`${itemsHtml}
         <tr>
-          <td style="padding:12px 0;font-weight:600;">Total paid</td>
-          <td style="padding:12px 0;text-align:right;font-weight:600;">₦${order.total.toLocaleString()}</td>
-        </tr>
-      </table>
+          <td style="padding:12px 0 0;font-weight:600;border-top:1px solid ${BRAND.border};">Total paid</td>
+          <td style="padding:12px 0 0;text-align:right;font-weight:600;border-top:1px solid ${BRAND.border};">₦${order.total.toLocaleString()}</td>
+        </tr>`)}
       ${button(`${SITE_URL}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "Track your order")}
       <p style="margin:24px 0 0;font-size:13px;color:${BRAND.muted};">Questions about your order? Email <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a>.</p>`,
       `Order ${order.orderNumber} confirmed`,
@@ -174,7 +224,7 @@ export function orderStatusEmail(order: {
   return {
     subject: `Order update — ${order.orderNumber}`,
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Order update</h1>
+      `${emailTitle("Order update")}
       <p style="margin:0 0 8px;">Hi ${order.firstName},</p>
       <p style="margin:0 0 16px;color:${BRAND.muted};">Your order <strong>${order.orderNumber}</strong> is now: <strong>${label}</strong>.</p>
       ${button(`${SITE_URL}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "View order status")}
@@ -189,7 +239,7 @@ export function newsletterWelcomeEmail() {
   return {
     subject: "You're in the Bollybee Circle",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Welcome to the Circle</h1>
+      `${emailTitle("Welcome to the Circle")}
       <p style="margin:0 0 16px;color:${BRAND.muted};">You'll be first to know about new releases, exclusive offers, and fragrance tips from Bollybee.</p>
       ${button(`${SITE_URL}/shop`, "Explore the collection")}`,
       "Welcome to the Bollybee Circle"
@@ -201,7 +251,7 @@ export function contactAcknowledgementEmail(name: string) {
   return {
     subject: "We received your message — Bollybee",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Message received</h1>
+      `${emailTitle("Message received")}
       <p style="margin:0 0 16px;">Dear ${name},</p>
       <p style="margin:0;color:${BRAND.muted};">Thank you for contacting Bollybee. Our team will reply from <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a> as soon as we can.</p>`,
       "We received your message",
@@ -214,7 +264,7 @@ export function adminNewOrderEmail(orderNumber: string, total: number) {
   return {
     subject: `New order — ${orderNumber}`,
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">New order</h1>
+      `${emailTitle("New order")}
       <p style="margin:0 0 16px;color:${BRAND.muted};">Order <strong>${orderNumber}</strong> for <strong>₦${total.toLocaleString()}</strong> was placed.</p>
       ${button(`${SITE_URL}/admin/orders`, "View in admin")}`,
       `New order ${orderNumber}`
@@ -226,7 +276,7 @@ export function abandonedCartEmail(firstName: string, itemCount: number) {
   return {
     subject: "You left something behind — Bollybee",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Still thinking it over?</h1>
+      `${emailTitle("Still thinking it over?")}
       <p style="margin:0 0 16px;">Hi ${firstName || "there"},</p>
       <p style="margin:0 0 16px;color:${BRAND.muted};">You have ${itemCount} item${itemCount !== 1 ? "s" : ""} waiting in your cart. Your selected fragrances are ready when you are.</p>
       ${button(`${SITE_URL}/cart`, "Complete your order")}`,
@@ -240,8 +290,8 @@ export function lowStockAlertEmail(items: { productName: string; variationName: 
     .map(
       (i) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid #e5ddd4;">${i.productName} (${i.variationName})</td>
-          <td style="padding:8px 0;border-bottom:1px solid #e5ddd4;text-align:right;color:#b91c1c;">${i.stock} left</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};">${i.productName} (${i.variationName})</td>
+          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};text-align:right;color:#b91c1c;">${i.stock} left</td>
         </tr>`
     )
     .join("");
@@ -249,9 +299,9 @@ export function lowStockAlertEmail(items: { productName: string; variationName: 
   return {
     subject: "Low stock alert — Bollybee Admin",
     html: emailLayout(
-      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Low stock alert</h1>
+      `${emailTitle("Low stock alert")}
       <p style="margin:0 0 16px;color:${BRAND.muted};">The following variations are running low:</p>
-      <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">${rows}</table>
+      ${dataTable(rows)}
       ${button(`${SITE_URL}/admin/products`, "Manage inventory")}`,
       "Low stock alert"
     ),
