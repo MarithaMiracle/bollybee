@@ -60,6 +60,8 @@ You see the admin sidebar: Dashboard, Products, Orders, Customers, Payments, Shi
 | **Favicon** | Bollybee bottle mark in the browser tab |
 | **Product structured data** | Product pages include a machine-readable product summary (name, brand, price in naira) that search engines can use for richer listings |
 | **Canonical site URL** | Built around bollybeefragrancelab.com so links and previews point at the real domain |
+| **AI search index** (`/llms.txt`) | Curated markdown map for AI assistants — key pages, categories, and products with absolute links |
+| **Extended AI guide** (`/llms-full.txt`) | Full brand summary, FAQ, contact details, and complete product catalogue for LLM context |
 
 ### SEO / marketing gaps (honest list — not yet done or outside the site build)
 
