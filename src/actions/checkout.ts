@@ -287,7 +287,12 @@ export async function verifyAndFulfillOrder(rawReference: string) {
   if (!payment) return { error: "Payment not found" };
 
   if (payment.status === "SUCCESSFUL") {
-    return { success: true, order: payment.orders, alreadyProcessed: true };
+    const { data: existingOrder } = await supabase
+      .from("orders")
+      .select("*, order_items(*)")
+      .eq("id", payment.order_id)
+      .single();
+    return { success: true, order: existingOrder, alreadyProcessed: true };
   }
 
   const { verifyTransaction } = await import("@/lib/paystack");
@@ -358,6 +363,9 @@ export async function verifyAndFulfillOrder(rawReference: string) {
       order_number: string;
       first_name: string;
       email: string;
+      subtotal: number;
+      shipping_fee: number;
+      discount: number;
       total: number;
       promo_code: string | null;
       order_items: { product_name: string; quantity: number; total: number }[];
@@ -375,6 +383,10 @@ export async function verifyAndFulfillOrder(rawReference: string) {
         orderNumber: orderRow.order_number,
         firstName: orderRow.first_name,
         total: orderRow.total,
+        subtotal: orderRow.subtotal,
+        shippingFee: orderRow.shipping_fee,
+        discount: orderRow.discount,
+        promoCode: orderRow.promo_code,
         email: orderRow.email,
         items: orderRow.order_items.map((i) => ({
           productName: i.product_name,

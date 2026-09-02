@@ -160,7 +160,7 @@ export default function CheckoutPage() {
         <h1 className="font-display text-3xl sm:text-4xl">Checkout</h1>
         {prefilled && (
           <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-            Welcome back — we&apos;ve filled in your details from your saved address or last order.
+            Welcome back! We&apos;ve filled in your details from your saved address or last order.
           </p>
         )}
       </div>

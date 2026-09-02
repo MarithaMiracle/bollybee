@@ -173,6 +173,10 @@ export function orderConfirmationEmail(order: {
   orderNumber: string;
   firstName: string;
   total: number;
+  subtotal: number;
+  shippingFee: number;
+  discount?: number;
+  promoCode?: string | null;
   email: string;
   items: { productName: string; quantity: number; total: number }[];
 }) {
@@ -180,22 +184,41 @@ export function orderConfirmationEmail(order: {
     .map(
       (i) =>
         `<tr>
-          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};">${i.productName} × ${i.quantity}</td>
-          <td style="padding:8px 0;border-bottom:1px solid ${BRAND.border};text-align:right;">₦${i.total.toLocaleString()}</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};">${i.productName} × ${i.quantity}</td>
+          <td style="padding:10px 0;border-bottom:1px solid ${BRAND.border};text-align:right;white-space:nowrap;">₦${i.total.toLocaleString()}</td>
         </tr>`
     )
     .join("");
+
+  const discountRow =
+    (order.discount ?? 0) > 0
+      ? `<tr>
+          <td style="padding:8px 0;color:${BRAND.muted};">Discount${order.promoCode ? ` (${order.promoCode})` : ""}</td>
+          <td style="padding:8px 0;text-align:right;color:#15803d;white-space:nowrap;">−₦${order.discount!.toLocaleString()}</td>
+        </tr>`
+      : "";
+
+  const summaryRows = `${itemsHtml}
+        <tr>
+          <td style="padding:12px 0 8px;border-top:1px solid ${BRAND.border};color:${BRAND.muted};">Subtotal</td>
+          <td style="padding:12px 0 8px;border-top:1px solid ${BRAND.border};text-align:right;white-space:nowrap;">₦${order.subtotal.toLocaleString()}</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 0;color:${BRAND.muted};">Shipping</td>
+          <td style="padding:8px 0;text-align:right;white-space:nowrap;">₦${order.shippingFee.toLocaleString()}</td>
+        </tr>
+        ${discountRow}
+        <tr>
+          <td style="padding:12px 0 0;font-weight:600;border-top:1px solid ${BRAND.border};">Total paid</td>
+          <td style="padding:12px 0 0;text-align:right;font-weight:600;border-top:1px solid ${BRAND.border};white-space:nowrap;">₦${order.total.toLocaleString()}</td>
+        </tr>`;
 
   return {
     subject: `Order confirmed — ${order.orderNumber}`,
     html: emailLayout(
       `${emailTitle(`Thank you, ${order.firstName}`)}
       <p style="margin:0 0 20px;color:${BRAND.muted};">Your payment was successful. We're preparing your order <strong>${order.orderNumber}</strong>.</p>
-      ${dataTable(`${itemsHtml}
-        <tr>
-          <td style="padding:12px 0 0;font-weight:600;border-top:1px solid ${BRAND.border};">Total paid</td>
-          <td style="padding:12px 0 0;text-align:right;font-weight:600;border-top:1px solid ${BRAND.border};">₦${order.total.toLocaleString()}</td>
-        </tr>`)}
+      ${dataTable(summaryRows)}
       ${button(`${SITE_URL}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "Track your order")}
       <p style="margin:24px 0 0;font-size:13px;color:${BRAND.muted};">Questions about your order? Email <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a>.</p>`,
       `Order ${order.orderNumber} confirmed`,
