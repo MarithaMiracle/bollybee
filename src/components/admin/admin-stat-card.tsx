@@ -12,7 +12,7 @@ export function AdminStatCard({ label, value, icon: Icon, className }: AdminStat
   return (
     <div
       className={cn(
-        "border border-[var(--border)] bg-white p-6 shadow-sm",
+        "rounded-[var(--radius-lg)] border border-[var(--border)] bg-white p-6 shadow-sm",
         className
       )}
     >

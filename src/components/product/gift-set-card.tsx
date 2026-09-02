@@ -44,7 +44,7 @@ export function GiftSetCard({
   }
 
   return (
-    <article className="overflow-hidden border border-[var(--border)] bg-white">
+    <article className="brand-panel overflow-hidden bg-white">
       {imageUrl && (
         <div className="relative aspect-[16/10] overflow-hidden bg-[var(--surface)]">
           <Image
@@ -56,7 +56,7 @@ export function GiftSetCard({
           />
         </div>
       )}
-      <div className="p-6">
+      <div className="p-5 sm:p-6">
         <h2 className="line-clamp-2 font-display text-xl sm:text-2xl">{name}</h2>
         <p className="mt-3 line-clamp-3 text-sm text-[var(--muted-foreground)]">{description}</p>
         <p className="mt-4 text-lg font-medium">{formatNaira(price)}</p>

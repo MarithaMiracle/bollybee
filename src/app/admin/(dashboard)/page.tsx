@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { formatNaira } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminStatCard } from "@/components/admin/admin-stat-card";
 import { AdminBadge } from "@/components/admin/admin-badge";
@@ -69,14 +70,14 @@ export default async function AdminDashboardPage() {
           <AdminCard>
             <ul className="divide-y divide-[var(--border)]">
               {lowStock!.map((v, i) => (
-                <li key={i} className="flex items-center justify-between gap-3 px-5 py-4 text-sm">
-                  <div className="flex items-center gap-2">
+                <li key={i} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm">
+                  <div className="flex min-w-0 items-center gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600" />
-                    <span>
+                    <span className="break-words">
                       {relationName(v.products)} ({v.name})
                     </span>
                   </div>
-                  <span className="font-medium text-red-700">{v.stock_quantity} left</span>
+                  <span className="shrink-0 font-medium text-red-700">{v.stock_quantity} left</span>
                 </li>
               ))}
             </ul>
@@ -121,24 +122,15 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <Link
-          href="/admin/products/new"
-          className="inline-flex h-10 items-center bg-[var(--plum)] px-5 text-sm text-[var(--background)] hover:opacity-90"
-        >
-          Add product
-        </Link>
-        <Link
-          href="/admin/orders"
-          className="inline-flex h-10 items-center border border-[var(--border)] bg-white px-5 text-sm hover:bg-[var(--surface)]"
-        >
-          Manage orders
-        </Link>
-        <Link
-          href="/admin/contacts"
-          className="inline-flex h-10 items-center border border-[var(--border)] bg-white px-5 text-sm hover:bg-[var(--surface)]"
-        >
-          Contact messages
-        </Link>
+        <Button asChild variant="accent">
+          <Link href="/admin/products/new">Add product</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/admin/orders">Manage orders</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/admin/contacts">Contact messages</Link>
+        </Button>
       </div>
     </div>
   );

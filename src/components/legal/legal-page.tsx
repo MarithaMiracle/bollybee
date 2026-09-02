@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BackLink } from "@/components/layout/back-link";
+import { CONTACT_EMAIL } from "@/lib/contact-info";
 
 export interface LegalSection {
   title: string;
@@ -17,6 +19,7 @@ export function LegalPage({ title, description, lastUpdated, sections }: LegalPa
   return (
     <div className="bg-[var(--satin-light)]">
       <div className="mx-auto max-w-3xl px-4 py-16 md:px-8 md:py-24">
+      <BackLink href="/" label="Back to home" className="mb-6" />
       <header>
         <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">Legal</p>
         <h1 className="mt-3 font-display text-3xl sm:text-4xl">{title}</h1>
@@ -50,8 +53,8 @@ export function LegalPage({ title, description, lastUpdated, sections }: LegalPa
           Contact us
         </Link>{" "}
         or email{" "}
-        <a href="mailto:hello@bollybee.com" className="text-[var(--plum)] underline-offset-4 hover:underline">
-          hello@bollybee.com
+        <a href={`mailto:${CONTACT_EMAIL}`} className="text-[var(--plum)] underline-offset-4 hover:underline">
+          {CONTACT_EMAIL}
         </a>
         .
       </p>

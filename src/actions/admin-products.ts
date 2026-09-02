@@ -198,3 +198,12 @@ export async function deleteProductImage(imageId: string, productId: string) {
   revalidatePath(`/admin/products/${productId}`);
   return { success: true };
 }
+
+export async function deleteProduct(id: string) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) return { error: "Failed to delete product. It may be linked to existing orders." };
+  revalidatePath("/admin/products");
+  return { success: true };
+}

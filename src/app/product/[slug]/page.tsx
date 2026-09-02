@@ -4,15 +4,21 @@ import { ProductDetail } from "@/components/product/product-detail";
 import { ProductJsonLd } from "@/components/product/product-jsonld";
 import { createClient } from "@/lib/supabase/server";
 import { isInWishlist } from "@/actions/wishlist";
+import { pageRange, parsePage, REVIEWS_PAGE_SIZE } from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ reviewPage?: string }>;
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductPage({ params, searchParams }: ProductPageProps) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const reviewPage = parsePage(sp.reviewPage);
+  const { from, to } = pageRange(reviewPage, REVIEWS_PAGE_SIZE);
+
   const product = await getProductBySlug(slug);
   if (!product) notFound();
 
@@ -21,16 +27,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const [related, { data: reviews }, inWishlist] = await Promise.all([
+  const [related, reviewsRes, reviewStatsRes, inWishlist] = await Promise.all([
     getRelatedProducts(product),
     supabase
       .from("product_reviews")
-      .select("id, author_name, rating, title, body, created_at")
+      .select("id, author_name, rating, title, body, created_at", { count: "exact" })
       .eq("product_id", product.id)
       .eq("approved", true)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .range(from, to),
+    supabase
+      .from("product_reviews")
+      .select("rating")
+      .eq("product_id", product.id)
+      .eq("approved", true),
     isInWishlist(product.id),
   ]);
+
+  const totalReviews = reviewsRes.count ?? 0;
+  const ratings = reviewStatsRes.data?.map((r) => r.rating) ?? [];
+  const reviewAverage =
+    ratings.length > 0 ? ratings.reduce((sum, r) => sum + r, 0) / ratings.length : null;
 
   const minPrice = Math.min(...(product.variations?.map((v) => v.price) ?? [0]));
 
@@ -40,7 +57,10 @@ export default async function ProductPage({ params }: ProductPageProps) {
       <ProductDetail
         product={product}
         related={related}
-        reviews={reviews ?? []}
+        reviews={reviewsRes.data ?? []}
+        totalReviews={totalReviews}
+        reviewPage={reviewPage}
+        reviewAverage={reviewAverage}
         isLoggedIn={Boolean(user)}
         inWishlist={inWishlist}
       />

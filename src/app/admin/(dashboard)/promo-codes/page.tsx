@@ -1,28 +1,57 @@
 import { requireAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { adminListParams, escapeIlike } from "@/lib/admin/list-query";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminCard, AdminEmpty } from "@/components/admin/admin-card";
-import { AdminBadge } from "@/components/admin/admin-badge";
-import { createPromoCode, togglePromoCode } from "@/actions/promo";
+import { PromoCodeRow } from "@/components/admin/promo-code-row";
+import {
+  AdminListToolbarSection,
+  AdminToolbarCard,
+} from "@/components/admin/admin-list-toolbar-section";
+import { Pagination } from "@/components/ui/pagination";
+import { createPromoCode } from "@/actions/promo";
+import { ADMIN_PAGE_SIZE, buildPageHref, pageRange, parsePage } from "@/lib/pagination";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminPromoCodesPage() {
+const FILTER_KEYS = ["active"] as const;
+
+interface AdminPromoCodesPageProps {
+  searchParams: Promise<{ page?: string; q?: string; active?: string }>;
+}
+
+export default async function AdminPromoCodesPage({ searchParams }: AdminPromoCodesPageProps) {
   await requireAdmin();
+  const params = await searchParams;
+  const page = parsePage(params.page);
+  const { from, to } = pageRange(page, ADMIN_PAGE_SIZE);
+  const listParams = adminListParams(params, [...FILTER_KEYS]);
+
   const supabase = createServiceClient();
-  const { data: codes } = await supabase
-    .from("promo_codes")
-    .select("*")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("promo_codes").select("*", { count: "exact" });
+
+  if (params.q?.trim()) {
+    const term = escapeIlike(params.q.trim());
+    query = query.or(`code.ilike.%${term}%,description.ilike.%${term}%`);
+  }
+  if (params.active === "true") query = query.eq("active", true);
+  if (params.active === "false") query = query.eq("active", false);
+
+  const { data: codes, count } = await query
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  const total = count ?? 0;
 
   return (
     <div className="space-y-8">
       <AdminPageHeader
         title="Promo codes"
-        description="Create and manage discount codes"
+        description={`${total} code${total !== 1 ? "s" : ""} total`}
       />
 
       <AdminCard>
@@ -41,15 +70,10 @@ export default async function AdminPromoCodesPage() {
             </div>
             <div>
               <Label htmlFor="discountType">Type</Label>
-              <select
-                id="discountType"
-                name="discountType"
-                className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
-                required
-              >
+              <Select id="discountType" name="discountType" required>
                 <option value="PERCENT">Percent off</option>
                 <option value="FIXED">Fixed amount (₦)</option>
-              </select>
+              </Select>
             </div>
             <div>
               <Label htmlFor="discountValue">Value</Label>
@@ -72,46 +96,64 @@ export default async function AdminPromoCodesPage() {
         </form>
       </AdminCard>
 
-      <AdminCard>
+      <AdminToolbarCard
+        toolbar={
+          <AdminListToolbarSection
+            basePath="/admin/promo-codes"
+            initialQuery={params.q}
+            searchPlaceholder="Search code or description…"
+            filters={[
+              {
+                key: "active",
+                label: "Status",
+                options: [
+                  { value: "true", label: "Active" },
+                  { value: "false", label: "Inactive" },
+                ],
+              },
+            ]}
+          />
+        }
+      >
         {!codes?.length ? (
-          <AdminEmpty message="No promo codes yet." />
+          <AdminEmpty
+            message={
+              params.q || params.active
+                ? "No promo codes match your filters."
+                : "No promo codes yet."
+            }
+          />
         ) : (
-          <ul className="divide-y divide-[var(--border)]">
-            {codes.map((c) => (
-              <li key={c.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 text-sm">
-                <div>
-                  <p className="font-mono font-medium">{c.code}</p>
-                  <p className="text-xs text-[var(--muted)]">
-                    {c.discount_type === "PERCENT"
-                      ? `${c.discount_value}% off`
-                      : `₦${c.discount_value.toLocaleString()} off`}
-                    {c.min_order_amount > 0 && ` · min ₦${c.min_order_amount.toLocaleString()}`}
-                    {" · "}
-                    used {c.used_count}
-                    {c.max_uses !== null ? ` / ${c.max_uses}` : ""}
-                  </p>
-                  {c.description && (
-                    <p className="text-xs text-[var(--muted-foreground)]">{c.description}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  <AdminBadge label={c.active ? "ACTIVE" : "INACTIVE"} />
-                  <form
-                    action={async () => {
-                      "use server";
-                      await togglePromoCode(c.id, !c.active);
-                    }}
-                  >
-                    <Button type="submit" variant="outline" size="sm">
-                      {c.active ? "Deactivate" : "Activate"}
-                    </Button>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-[var(--border)]">
+              {codes.map((c) => (
+                <PromoCodeRow
+                  key={c.id}
+                  id={c.id}
+                  code={c.code}
+                  discountLabel={
+                    c.discount_type === "PERCENT"
+                      ? `${c.discount_value}% off${c.min_order_amount > 0 ? ` · min ₦${c.min_order_amount.toLocaleString()}` : ""}`
+                      : `₦${c.discount_value.toLocaleString()} off${c.min_order_amount > 0 ? ` · min ₦${c.min_order_amount.toLocaleString()}` : ""}`
+                  }
+                  usageLabel={`used ${c.used_count}${c.max_uses !== null ? ` / ${c.max_uses}` : ""}`}
+                  description={c.description}
+                  active={c.active}
+                />
+              ))}
+            </ul>
+            <div className="px-5 pb-5">
+              <Pagination
+                page={page}
+                total={total}
+                limit={ADMIN_PAGE_SIZE}
+                className="mt-2"
+                buildHref={(p) => buildPageHref("/admin/promo-codes", p, listParams)}
+              />
+            </div>
+          </>
         )}
-      </AdminCard>
+      </AdminToolbarCard>
     </div>
   );
 }

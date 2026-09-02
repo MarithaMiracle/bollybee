@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { verifyAndFulfillOrder } from "@/actions/checkout";
 import { Button } from "@/components/ui/button";
+import { BackLink } from "@/components/layout/back-link";
 import { formatNaira } from "@/lib/utils";
 import { resolvePaystackReference } from "@/lib/paystack/reference";
 import type { PaystackRedirectParams } from "@/lib/paystack/reference";
@@ -18,6 +19,7 @@ export default async function OrderSuccessPage({ searchParams }: SuccessPageProp
   if (!reference) {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <BackLink href="/shop" label="Back to shop" className="mb-8" />
         <h1 className="font-display text-3xl">Order Confirmation</h1>
         <p className="mt-4 text-[var(--muted-foreground)]">No order reference provided.</p>
         <Button asChild className="mt-8"><Link href="/shop">Continue Shopping</Link></Button>
@@ -30,6 +32,7 @@ export default async function OrderSuccessPage({ searchParams }: SuccessPageProp
   if (result.error || !result.order) {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <BackLink href="/shop" label="Back to shop" className="mb-8" />
         <h1 className="font-display text-3xl">Payment Pending</h1>
         <p className="mt-4 text-[var(--muted-foreground)]">
           {result.error || "We are confirming your payment. Please check back shortly."}
@@ -52,15 +55,16 @@ export default async function OrderSuccessPage({ searchParams }: SuccessPageProp
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16 md:px-8 md:py-24">
+      <BackLink href="/shop" label="Back to shop" className="mb-8" />
       <div className="text-center">
         <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">Thank you</p>
-        <h1 className="mt-2 font-display text-4xl">Order Confirmed</h1>
+        <h1 className="mt-2 font-display text-3xl sm:text-4xl">Order Confirmed</h1>
         <p className="mt-4 text-[var(--muted-foreground)]">
           Hi {order.first_name}, your payment was successful.
         </p>
       </div>
 
-      <div className="mt-10 border border-[var(--border)] bg-white p-6">
+      <div className="brand-panel mt-10 bg-white p-6">
         <dl className="space-y-3 text-sm">
           <div className="flex justify-between">
             <dt className="text-[var(--muted)]">Order number</dt>

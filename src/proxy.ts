@@ -33,12 +33,14 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAdminRoute = pathname.startsWith("/admin");
   const isAdminLogin = pathname === "/admin/login";
-  const isAccountLogin = pathname === "/account/login";
-  const isAccountProtected =
-    pathname.startsWith("/account") && !isAccountLogin;
+  const isAccountPublic =
+    pathname === "/account/login" ||
+    pathname === "/account/forgot-password" ||
+    pathname === "/account/reset-password";
+  const isAccountProtected = pathname.startsWith("/account") && !isAccountPublic;
 
-  // Customer account: redirect signed-in users away from login
-  if (isAccountLogin && user) {
+  // Signed-in users shouldn't see login again
+  if (pathname === "/account/login" && user) {
     return NextResponse.redirect(new URL("/account/orders", request.url));
   }
 
@@ -82,6 +84,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icon.png|apple-icon.png|robots.txt|sitemap.xml|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|auth/callback|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };

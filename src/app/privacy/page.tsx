@@ -11,7 +11,7 @@ const SECTIONS = [
   {
     title: "Introduction",
     paragraphs: [
-      "Bollybee Fragrance Lab (\"Bollybee\", \"we\", \"us\", or \"our\") operates bollybee.com and related services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, create an account, or place an order.",
+      "Bollybee Fragrance Lab (\"Bollybee\", \"we\", \"us\", or \"our\") operates bollybeefragrancelab.com and related services. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website, create an account, or place an order.",
       "By using our services, you agree to the collection and use of information in accordance with this policy. If you do not agree, please do not use our website.",
     ],
   },
@@ -76,7 +76,7 @@ const SECTIONS = [
     title: "Your Rights",
     paragraphs: [
       "Under the Nigeria Data Protection Act (NDPA) and applicable regulations, you may have the right to access, correct, delete, or restrict processing of your personal data, and to withdraw consent where processing is based on consent.",
-      "To exercise these rights, contact us at hello@bollybee.com. We will respond within a reasonable timeframe.",
+      "To exercise these rights, contact us at hello@bollybeefragrancelab.com. We will respond within a reasonable timeframe.",
     ],
   },
   {

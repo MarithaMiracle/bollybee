@@ -1,11 +1,14 @@
 import Link from "next/link";
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AccountNav } from "@/components/account/account-nav";
-import { formatNaira } from "@/lib/utils";
-import { ProductPlaceholder } from "@/components/product/product-placeholder";
-import { relationName } from "@/lib/supabase/relation";
+import { WishlistItemCard } from "@/components/account/wishlist-item-card";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  ACCOUNT_WISHLIST_PAGE_SIZE,
+  buildPageHref,
+  pageRange,
+  parsePage,
+} from "@/lib/pagination";
 
 type WishlistProduct = {
   id: string;
@@ -25,77 +28,88 @@ function parseWishlistProduct(value: unknown): WishlistProduct | null {
 
 export const dynamic = "force-dynamic";
 
-export default async function AccountWishlistPage() {
+interface AccountWishlistPageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function AccountWishlistPage({ searchParams }: AccountWishlistPageProps) {
+  const params = await searchParams;
+  const page = parsePage(params.page);
+  const { from, to } = pageRange(page, ACCOUNT_WISHLIST_PAGE_SIZE);
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/account/login");
 
-  const { data: items } = await supabase
+  const { data: items, count } = await supabase
     .from("wishlist_items")
-    .select(`
+    .select(
+      `
       id,
       products (
         id, name, slug,
         images:product_images (image_url, alt_text, sort_order),
         variations:product_variations (price, active)
       )
-    `)
+    `,
+      { count: "exact" }
+    )
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  const total = count ?? 0;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
-      <AccountNav active="/account/wishlist" />
-      <h1 className="font-display text-3xl">Wishlist</h1>
-      <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-        {items?.length ?? 0} item{(items?.length ?? 0) !== 1 ? "s" : ""} saved
+    <>
+      <p className="text-sm text-[var(--muted-foreground)]">
+        {total} item{total !== 1 ? "s" : ""} saved
       </p>
 
-      {!items?.length ? (
-        <p className="mt-8 text-[var(--muted-foreground)]">
-          Your wishlist is empty.{" "}
-          <Link href="/shop" className="text-[var(--plum)] underline">Browse the shop</Link>
-        </p>
-      ) : (
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map((item) => {
-            const product = parseWishlistProduct(item.products);
-            if (!product) return null;
-            const image = product.images?.sort((a, b) => a.sort_order - b.sort_order)[0];
-            const minPrice = Math.min(
-              ...(product.variations?.filter((v) => v.active).map((v) => v.price) ?? [0])
-            );
-
-            return (
-              <Link
-                key={item.id}
-                href={`/product/${product.slug}`}
-                className="group overflow-hidden border border-[var(--border)] bg-white transition-shadow hover:shadow-md"
-              >
-                <div className="relative aspect-[3/4] bg-[var(--surface)]">
-                  {image ? (
-                    <Image
-                      src={image.image_url}
-                      alt={image.alt_text || product.name}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width:768px) 50vw, 33vw"
-                    />
-                  ) : (
-                    <ProductPlaceholder name={product.name} />
-                  )}
-                </div>
-                <div className="p-4">
-                  <h2 className="font-display text-lg">{product.name}</h2>
-                  <p className="mt-1 text-sm font-medium">{formatNaira(minPrice)}</p>
-                </div>
-              </Link>
-            );
-          })}
+      {total === 0 ? (
+        <div className="mt-8 rounded-[var(--radius)] border border-dashed border-[var(--border)] bg-[var(--surface)]/50 px-6 py-12 text-center">
+          <p className="text-[var(--muted-foreground)]">Your wishlist is empty.</p>
+          <Link
+            href="/shop"
+            className="mt-4 inline-block text-sm text-[var(--plum)] underline-offset-4 hover:underline"
+          >
+            Browse the shop
+          </Link>
         </div>
+      ) : (
+        <>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {items!.map((item) => {
+              const product = parseWishlistProduct(item.products);
+              if (!product) return null;
+              const image = product.images?.sort((a, b) => a.sort_order - b.sort_order)[0];
+              const minPrice = Math.min(
+                ...(product.variations?.filter((v) => v.active).map((v) => v.price) ?? [0])
+              );
+
+              return (
+                <WishlistItemCard
+                  key={item.id}
+                  itemId={item.id}
+                  name={product.name}
+                  slug={product.slug}
+                  imageUrl={image?.image_url}
+                  imageAlt={image?.alt_text}
+                  minPrice={minPrice}
+                />
+              );
+            })}
+          </div>
+          <Pagination
+            page={page}
+            total={total}
+            limit={ACCOUNT_WISHLIST_PAGE_SIZE}
+            buildHref={(p) => buildPageHref("/account/wishlist", p)}
+          />
+        </>
       )}
-    </div>
+    </>
   );
 }

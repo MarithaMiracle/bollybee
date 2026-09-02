@@ -10,7 +10,7 @@ export function AdminCard({ children, className, padding = true }: AdminCardProp
   return (
     <div
       className={cn(
-        "overflow-hidden border border-[var(--border)] bg-white shadow-sm",
+        "overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-white shadow-sm",
         padding && "p-0",
         className
       )}

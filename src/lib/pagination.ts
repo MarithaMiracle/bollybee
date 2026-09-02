@@ -1,6 +1,8 @@
 export const SHOP_PAGE_SIZE = 12;
 export const ADMIN_PAGE_SIZE = 25;
 export const ACCOUNT_ORDERS_PAGE_SIZE = 10;
+export const ACCOUNT_WISHLIST_PAGE_SIZE = 12;
+export const REVIEWS_PAGE_SIZE = 10;
 
 export function parsePage(value?: string | null): number {
   const page = parseInt(value ?? "1", 10);
@@ -21,7 +23,8 @@ export function totalPages(total: number, limit: number): number {
 export function buildPageHref(
   basePath: string,
   page: number,
-  params?: Record<string, string | undefined | null>
+  params?: Record<string, string | undefined | null>,
+  pageParam = "page"
 ): string {
   const search = new URLSearchParams();
   if (params) {
@@ -29,7 +32,7 @@ export function buildPageHref(
       if (value) search.set(key, value);
     }
   }
-  if (page > 1) search.set("page", String(page));
+  if (page > 1) search.set(pageParam, String(page));
   const query = search.toString();
   return query ? `${basePath}?${query}` : basePath;
 }

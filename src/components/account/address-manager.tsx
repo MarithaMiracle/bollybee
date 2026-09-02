@@ -5,7 +5,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import { saveAddress, deleteAddress, setDefaultAddress } from "@/actions/addresses";
+import { useConfirm } from "@/components/ui/confirm-provider";
 
 interface SavedAddress {
   id: string;
@@ -33,6 +35,7 @@ export function AddressManager({
   initialAddresses: SavedAddress[];
   states: { id: string; name: string }[];
 }) {
+  const confirm = useConfirm();
   const [addresses, setAddresses] = useState(initialAddresses);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -62,8 +65,15 @@ export function AddressManager({
     }
   }
 
-  async function handleDelete(id: string) {
-    if (!confirm("Delete this address?")) return;
+  async function handleDelete(id: string, label: string) {
+    const ok = await confirm({
+      title: "Delete this address?",
+      description: `"${label}" will be permanently removed from your saved addresses.`,
+      confirmLabel: "Delete address",
+      variant: "destructive",
+    });
+    if (!ok) return;
+
     await deleteAddress(id);
     setAddresses((prev) => prev.filter((a) => a.id !== id));
     toast.success("Address deleted");
@@ -84,7 +94,10 @@ export function AddressManager({
       </Button>
 
       {showForm && (
-        <form onSubmit={handleSave} className="space-y-4 border bg-white p-6">
+        <form
+          onSubmit={handleSave}
+          className="space-y-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)]/40 p-5 md:p-6"
+        >
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label htmlFor="label">Label</Label>
@@ -108,35 +121,33 @@ export function AddressManager({
             </div>
             <div>
               <Label htmlFor="shippingState">State</Label>
-              <select
+              <Select
                 id="shippingState"
                 name="shippingState"
                 required
                 value={selectedState}
                 onChange={(e) => loadLgas(e.target.value)}
-                className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
               >
                 <option value="">Select state</option>
                 {states.map((s) => (
                   <option key={s.id} value={s.name}>{s.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div>
               <Label htmlFor="shippingLga">LGA</Label>
               {lgas.length > 0 ? (
-                <select
+                <Select
                   id="shippingLga"
                   name="shippingLga"
                   required
-                  className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
                   disabled={!selectedState}
                 >
                   <option value="">Select LGA</option>
                   {lgas.map((l) => (
                     <option key={l.id} value={l.name}>{l.name}</option>
                   ))}
-                </select>
+                </Select>
               ) : (
                 <Input
                   id="shippingLga"
@@ -173,11 +184,11 @@ export function AddressManager({
       {!addresses.length ? (
         <p className="text-sm text-[var(--muted-foreground)]">No saved addresses yet.</p>
       ) : (
-        <ul className="divide-y divide-[var(--border)] border border-[var(--border)] bg-white">
+        <ul className="divide-y divide-[var(--border)]">
           {addresses.map((a) => (
-            <li key={a.id} className="p-5">
+            <li key={a.id} className="py-5 first:pt-0 last:pb-0">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-medium">
                     {a.label}
                     {a.is_default && (
@@ -186,19 +197,19 @@ export function AddressManager({
                       </span>
                     )}
                   </p>
-                  <p className="mt-1 text-sm">{a.first_name} {a.last_name} · {a.phone}</p>
-                  <p className="mt-1 text-sm text-[var(--muted-foreground)]">
+                  <p className="mt-1 break-words text-sm">{a.first_name} {a.last_name} · {a.phone}</p>
+                  <p className="mt-1 break-words text-sm text-[var(--muted-foreground)]">
                     {a.shipping_address}, {a.shipping_city}<br />
                     {a.shipping_lga}, {a.shipping_state}
                   </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex w-full flex-wrap gap-2 sm:w-auto">
                   {!a.is_default && (
                     <Button type="button" variant="outline" size="sm" onClick={() => handleSetDefault(a.id)}>
                       Set default
                     </Button>
                   )}
-                  <Button type="button" variant="outline" size="sm" onClick={() => handleDelete(a.id)}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => handleDelete(a.id, a.label)}>
                     Delete
                   </Button>
                 </div>

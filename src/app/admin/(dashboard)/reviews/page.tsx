@@ -1,106 +1,187 @@
 import { requireAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { adminListParams, escapeIlike } from "@/lib/admin/list-query";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminCard, AdminEmpty } from "@/components/admin/admin-card";
-import { AdminBadge } from "@/components/admin/admin-badge";
-import { approveReview, deleteReview } from "@/actions/reviews";
+import { AdminEmpty } from "@/components/admin/admin-card";
+import { AdminReviewItem } from "@/components/admin/admin-review-item";
+import {
+  AdminListToolbarSection,
+  AdminToolbarCard,
+} from "@/components/admin/admin-list-toolbar-section";
+import { Pagination } from "@/components/ui/pagination";
 import { relationName } from "@/lib/supabase/relation";
-import { Button } from "@/components/ui/button";
-import { Star } from "lucide-react";
+import {
+  ADMIN_PAGE_SIZE,
+  buildPageHref,
+  pageRange,
+  parsePage,
+} from "@/lib/pagination";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminReviewsPage() {
+interface AdminReviewsPageProps {
+  searchParams: Promise<{ pendingPage?: string; approvedPage?: string; q?: string }>;
+}
+
+function applyReviewSearch<T extends { or: (filters: string) => T }>(
+  query: T,
+  q?: string
+): T {
+  if (!q?.trim()) return query;
+  const term = escapeIlike(q.trim());
+  return query.or(
+    `author_name.ilike.%${term}%,title.ilike.%${term}%,body.ilike.%${term}%`
+  );
+}
+
+export default async function AdminReviewsPage({ searchParams }: AdminReviewsPageProps) {
   await requireAdmin();
+  const params = await searchParams;
+  const pendingPage = parsePage(params.pendingPage);
+  const approvedPage = parsePage(params.approvedPage);
+  const pendingRange = pageRange(pendingPage, ADMIN_PAGE_SIZE);
+  const approvedRange = pageRange(approvedPage, ADMIN_PAGE_SIZE);
+  const listParams = adminListParams(params, []);
+
   const supabase = createServiceClient();
 
-  const { data: reviews } = await supabase
-    .from("product_reviews")
-    .select("*, products(name, slug)")
-    .order("created_at", { ascending: false })
-    .limit(100);
+  const [
+    { data: pending, count: pendingTotal },
+    { data: approved, count: approvedTotal },
+  ] = await Promise.all([
+    applyReviewSearch(
+      supabase
+        .from("product_reviews")
+        .select("*, products(name, slug)", { count: "exact" })
+        .eq("approved", false),
+      params.q
+    )
+      .order("created_at", { ascending: false })
+      .range(pendingRange.from, pendingRange.to),
+    applyReviewSearch(
+      supabase
+        .from("product_reviews")
+        .select("*, products(name, slug)", { count: "exact" })
+        .eq("approved", true),
+      params.q
+    )
+      .order("created_at", { ascending: false })
+      .range(approvedRange.from, approvedRange.to),
+  ]);
 
-  const pending = reviews?.filter((r) => !r.approved) ?? [];
-  const approved = reviews?.filter((r) => r.approved) ?? [];
+  const pendingCount = pendingTotal ?? 0;
+  const approvedCount = approvedTotal ?? 0;
+
+  function pendingHref(p: number) {
+    const extra: Record<string, string | undefined> = { ...listParams };
+    if (approvedPage > 1) extra.approvedPage = String(approvedPage);
+    return buildPageHref("/admin/reviews", p, extra, "pendingPage");
+  }
+
+  function approvedHref(p: number) {
+    const extra: Record<string, string | undefined> = { ...listParams };
+    if (pendingPage > 1) extra.pendingPage = String(pendingPage);
+    return buildPageHref("/admin/reviews", p, extra, "approvedPage");
+  }
 
   return (
     <div className="space-y-8">
       <AdminPageHeader
         title="Product reviews"
-        description={`${pending.length} pending · ${approved.length} approved`}
+        description={`${pendingCount} pending · ${approvedCount} approved`}
       />
 
-      <AdminCard>
+      <AdminToolbarCard
+        toolbar={
+          <AdminListToolbarSection
+            basePath="/admin/reviews"
+            initialQuery={params.q}
+            searchPlaceholder="Search author, title, or review…"
+            preserveKeys={["pendingPage", "approvedPage"]}
+            resetPageKeys={["pendingPage", "approvedPage"]}
+          />
+        }
+      >
         <h2 className="border-b border-[var(--border)] px-5 py-4 font-display text-lg">
           Pending approval
         </h2>
-        {!pending.length ? (
-          <AdminEmpty message="No reviews awaiting approval." />
+        {!pending?.length ? (
+          <AdminEmpty
+            message={
+              params.q?.trim()
+                ? "No pending reviews match your search."
+                : "No reviews awaiting approval."
+            }
+          />
         ) : (
-          <ul className="divide-y divide-[var(--border)]">
-            {pending.map((r) => (
-              <li key={r.id} className="space-y-3 px-5 py-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">
-                      {relationName(r.products)}
-                    </p>
-                    <p className="text-xs text-[var(--muted)]">
-                      {r.author_name} · {new Date(r.created_at).toLocaleDateString("en-NG")}
-                    </p>
-                    <div className="mt-1 flex">
-                      {[1, 2, 3, 4, 5].map((n) => (
-                        <Star
-                          key={n}
-                          className={`h-3.5 w-3.5 ${n <= r.rating ? "fill-[var(--plum)] text-[var(--plum)]" : "text-[var(--border)]"}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <AdminBadge label="PENDING" />
-                </div>
-                {r.title && <p className="font-display text-base">{r.title}</p>}
-                <p className="text-sm text-[var(--muted-foreground)]">{r.body}</p>
-                <div className="flex gap-2">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await approveReview(r.id);
-                    }}
-                  >
-                    <Button type="submit" size="sm">Approve</Button>
-                  </form>
-                  <form
-                    action={async () => {
-                      "use server";
-                      await deleteReview(r.id);
-                    }}
-                  >
-                    <Button type="submit" variant="outline" size="sm">Reject</Button>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <>
+            <ul className="divide-y divide-[var(--border)]">
+              {pending.map((r) => (
+                <AdminReviewItem
+                  key={r.id}
+                  id={r.id}
+                  productName={relationName(r.products)}
+                  authorName={r.author_name}
+                  createdAt={new Date(r.created_at).toLocaleDateString("en-NG")}
+                  rating={r.rating}
+                  title={r.title}
+                  body={r.body}
+                  approved={false}
+                />
+              ))}
+            </ul>
+            <div className="px-5 pb-5">
+              <Pagination
+                page={pendingPage}
+                total={pendingCount}
+                limit={ADMIN_PAGE_SIZE}
+                className="mt-6"
+                buildHref={pendingHref}
+              />
+            </div>
+          </>
         )}
-      </AdminCard>
+      </AdminToolbarCard>
 
-      {approved.length > 0 && (
-        <AdminCard>
-          <h2 className="border-b border-[var(--border)] px-5 py-4 font-display text-lg">
-            Approved
-          </h2>
-          <ul className="divide-y divide-[var(--border)]">
-            {approved.slice(0, 20).map((r) => (
-              <li key={r.id} className="px-5 py-4 text-sm">
-                <p className="font-medium">{relationName(r.products)}</p>
-                <p className="text-xs text-[var(--muted)]">{r.author_name} · {r.rating}/5</p>
-                <p className="mt-1 text-[var(--muted-foreground)] line-clamp-2">{r.body}</p>
-              </li>
-            ))}
-          </ul>
-        </AdminCard>
-      )}
+      <AdminToolbarCard>
+        <h2 className="border-b border-[var(--border)] px-5 py-4 font-display text-lg">
+          Approved
+        </h2>
+        {!approved?.length ? (
+          <AdminEmpty
+            message={
+              params.q?.trim() ? "No approved reviews match your search." : "No approved reviews yet."
+            }
+          />
+        ) : (
+          <>
+            <ul className="divide-y divide-[var(--border)]">
+              {approved.map((r) => (
+                <AdminReviewItem
+                  key={r.id}
+                  id={r.id}
+                  productName={relationName(r.products)}
+                  authorName={r.author_name}
+                  createdAt={new Date(r.created_at).toLocaleDateString("en-NG")}
+                  rating={r.rating}
+                  title={r.title}
+                  body={r.body}
+                  approved
+                />
+              ))}
+            </ul>
+            <div className="px-5 pb-5">
+              <Pagination
+                page={approvedPage}
+                total={approvedCount}
+                limit={ADMIN_PAGE_SIZE}
+                className="mt-6"
+                buildHref={approvedHref}
+              />
+            </div>
+          </>
+        )}
+      </AdminToolbarCard>
     </div>
   );
 }

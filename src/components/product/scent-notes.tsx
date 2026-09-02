@@ -24,7 +24,7 @@ export function ScentNotesDisplay({ notes }: ScentNotesDisplayProps) {
               </p>
               <ul className="space-y-1">
                 {items.map((note) => (
-                  <li key={note.id} className="font-display text-lg text-[var(--plum)]">
+                  <li key={note.id} className="break-words font-display text-base text-[var(--plum)] sm:text-lg">
                     {note.name}
                   </li>
                 ))}

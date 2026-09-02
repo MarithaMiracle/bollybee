@@ -41,3 +41,12 @@ export async function togglePromoCode(id: string, active: boolean) {
   revalidatePath("/admin/promo-codes");
   return { success: true };
 }
+
+export async function deletePromoCode(id: string) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+  const { error } = await supabase.from("promo_codes").delete().eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath("/admin/promo-codes");
+  return { success: true };
+}

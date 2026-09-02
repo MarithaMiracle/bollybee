@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { reverifyOrderPayment, updateOrderFulfillment } from "@/actions/admin-orders";
 import { formatNaira, FULFILLMENT_STEPS } from "@/lib/utils";
 import type { FulfillmentStatus } from "@/types";
-import Link from "next/link";
+import { BackLink } from "@/components/layout/back-link";
 
 interface OrderDetailProps {
   order: {
@@ -71,16 +73,16 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
 
   return (
     <div className="space-y-8">
+      <BackLink href="/admin/orders" label="Back to orders" className="mb-2" />
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
           <h1 className="truncate font-display text-2xl sm:text-3xl">{order.order_number}</h1>
           <p className="break-all text-sm text-[var(--muted)]">{order.email} · {order.phone}</p>
         </div>
-        <Link href="/admin/orders" className="shrink-0 text-sm text-[var(--plum)] underline">← Back</Link>
       </div>
 
       {isPendingPayment && (
-        <div className="border border-amber-200 bg-amber-50 p-4 text-sm">
+        <div className="brand-panel rounded-[var(--radius-sm)] border-amber-200 bg-amber-50 p-4 text-sm">
           <p className="font-medium text-amber-900">Payment pending</p>
           <p className="mt-1 text-amber-800">
             Customer paid on Paystack but verification may have failed. Re-verify to fulfill stuck orders.
@@ -99,7 +101,7 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="border bg-white p-6">
+        <div className="brand-panel bg-white p-6">
           <h2 className="font-display text-lg">Order Summary</h2>
           <dl className="mt-4 space-y-2 text-sm">
             <div className="flex justify-between"><dt>Subtotal</dt><dd>{formatNaira(order.subtotal)}</dd></div>
@@ -118,7 +120,7 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
           )}
         </div>
 
-        <div className="border bg-white p-6">
+        <div className="brand-panel bg-white p-6">
           <h2 className="font-display text-lg">Shipping</h2>
           <p className="mt-2 text-sm">{order.first_name} {order.last_name}</p>
           <p className="text-sm text-[var(--muted-foreground)]">
@@ -128,7 +130,7 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
         </div>
       </div>
 
-      <div className="border bg-white p-6">
+      <div className="brand-panel bg-white p-6">
         <h2 className="font-display text-lg">Items</h2>
         <ul className="mt-4 divide-y text-sm">
           {order.order_items.map((item, i) => (
@@ -140,25 +142,23 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
         </ul>
       </div>
 
-      <div className="border bg-white p-6">
+      <div className="brand-panel bg-white p-6">
         <h2 className="font-display text-lg">Update Fulfillment</h2>
-        <div className="mt-4 space-y-4 max-w-md">
-          <select
+        <div className="mt-4 max-w-md space-y-4">
+          <Select
             value={status}
             onChange={(e) => setStatus(e.target.value as FulfillmentStatus)}
-            className="w-full border px-3 py-2 text-sm"
           >
             {FULFILLMENT_STEPS.map((s) => (
               <option key={s.key} value={s.key}>{s.label}</option>
             ))}
             <option value="CANCELLED">Cancelled</option>
-          </select>
-          <textarea
+          </Select>
+          <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Internal notes"
             rows={3}
-            className="w-full border p-3 text-sm"
           />
           <Button onClick={handleUpdate} disabled={loading}>
             {loading ? "Saving…" : "Update Order"}
@@ -168,7 +168,7 @@ export function OrderDetailClient({ order }: OrderDetailProps) {
           {FULFILLMENT_STEPS.map((s, i) => (
             <span
               key={s.key}
-              className={`px-2 py-1 text-[10px] uppercase tracking-wider ${i <= stepIndex ? "bg-[var(--plum)] text-white" : "border text-[var(--muted)]"}`}
+              className={`rounded-[var(--radius-sm)] px-2 py-1 text-[10px] uppercase tracking-wider ${i <= stepIndex ? "bg-[var(--plum)] text-white" : "border border-[var(--border)] text-[var(--muted)]"}`}
             >
               {s.label}
             </span>

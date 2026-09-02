@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatNaira } from "@/lib/utils";
-import { AccountNav } from "@/components/account/account-nav";
 import { Pagination } from "@/components/ui/pagination";
 import {
   ACCOUNT_ORDERS_PAGE_SIZE,
@@ -41,48 +40,61 @@ export default async function AccountOrdersPage({ searchParams }: AccountOrdersP
   const total = count ?? 0;
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-16">
-      <AccountNav active="/account/orders" />
-      <div>
-        <h1 className="font-display text-3xl">My Orders</h1>
-        <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-          {total} order{total !== 1 ? "s" : ""}
-        </p>
-      </div>
+    <>
+      <p className="text-sm text-[var(--muted-foreground)]">
+        {total} order{total !== 1 ? "s" : ""}
+      </p>
+
       {!orders?.length ? (
-        <p className="mt-8 text-[var(--muted-foreground)]">No orders yet.</p>
+        <div className="mt-8 rounded-[var(--radius)] border border-dashed border-[var(--border)] bg-[var(--surface)]/50 px-6 py-12 text-center">
+          <p className="text-[var(--muted-foreground)]">No orders yet.</p>
+          <Link
+            href="/shop"
+            className="mt-4 inline-block text-sm text-[var(--plum)] underline-offset-4 hover:underline"
+          >
+            Start shopping
+          </Link>
+        </div>
       ) : (
-        <ul className="mt-8 divide-y divide-[var(--border)] border border-[var(--border)] bg-white">
+        <ul className="mt-6 divide-y divide-[var(--border)]">
           {orders.map((o) => (
-            <li key={o.order_number} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <li
+              key={o.order_number}
+              className="flex flex-col gap-3 py-5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+            >
               <div className="min-w-0">
                 <p className="truncate font-medium">{o.order_number}</p>
-                <p className="text-xs text-[var(--muted)]">
+                <p className="mt-1 text-xs capitalize text-[var(--muted)]">
                   {o.fulfillment_status.replace(/_/g, " ")}
                 </p>
+                <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+                  {new Date(o.created_at).toLocaleDateString("en-NG", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
-              <div className="flex items-center justify-between gap-4 sm:block sm:text-right">
-                <p>{formatNaira(o.total)}</p>
+              <div className="flex items-center justify-between gap-4 sm:flex-col sm:items-end sm:justify-center">
+                <p className="font-medium">{formatNaira(o.total)}</p>
                 <Link
                   href={`/track-order?order=${o.order_number}`}
-                  className="text-xs text-[var(--plum)] underline"
+                  className="text-xs text-[var(--plum)] underline-offset-4 hover:underline"
                 >
-                  Track
+                  Track order
                 </Link>
               </div>
             </li>
           ))}
         </ul>
       )}
+
       <Pagination
         page={page}
         total={total}
         limit={ACCOUNT_ORDERS_PAGE_SIZE}
         buildHref={(p) => buildPageHref("/account/orders", p)}
       />
-      <Link href="/shop" className="mt-8 inline-block text-sm text-[var(--plum)] underline">
-        Continue shopping
-      </Link>
-    </div>
+    </>
   );
 }

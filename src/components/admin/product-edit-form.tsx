@@ -1,10 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import {
   updateProduct,
   addVariation,
@@ -12,6 +15,7 @@ import {
   uploadProductImage,
   deleteProductImage,
 } from "@/actions/admin-products";
+import { useConfirm } from "@/components/ui/confirm-provider";
 import { FRAGRANCE_FAMILIES, formatNaira } from "@/lib/utils";
 import type { Category, Product, ProductVariation, ScentNote, ProductImage } from "@/types";
 import Image from "next/image";
@@ -26,6 +30,8 @@ interface ProductEditFormProps {
 }
 
 export function ProductEditForm({ product, categories }: ProductEditFormProps) {
+  const confirm = useConfirm();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
@@ -74,21 +80,21 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
         </div>
         <div>
           <Label htmlFor="categoryId">Category</Label>
-          <select id="categoryId" name="categoryId" defaultValue={product.category_id ?? ""} className="flex h-11 w-full border px-3 text-sm">
+          <Select id="categoryId" name="categoryId" defaultValue={product.category_id ?? ""}>
             <option value="">None</option>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
           <Label htmlFor="fragranceFamily">Family</Label>
-          <select id="fragranceFamily" name="fragranceFamily" defaultValue={product.fragrance_family ?? ""} className="flex h-11 w-full border px-3 text-sm">
+          <Select id="fragranceFamily" name="fragranceFamily" defaultValue={product.fragrance_family ?? ""}>
             <option value="">None</option>
             {FRAGRANCE_FAMILIES.map((f) => <option key={f} value={f}>{f}</option>)}
-          </select>
+          </Select>
         </div>
         <div>
           <Label htmlFor="description">Description</Label>
-          <textarea id="description" name="description" defaultValue={product.description ?? ""} rows={4} className="w-full border p-3 text-sm" />
+          <Textarea id="description" name="description" defaultValue={product.description ?? ""} rows={4} />
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
           <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Featured</label>
@@ -103,7 +109,7 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
         <h2 className="font-display text-xl">Variations</h2>
         <ul className="mt-4 space-y-2 text-sm">
           {(product.variations ?? []).map((v) => (
-            <li key={v.id} className="flex flex-col gap-1 border p-3 sm:flex-row sm:items-center sm:justify-between">
+            <li key={v.id} className="flex flex-col gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] p-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="min-w-0 break-words">{v.name} — {formatNaira(v.price)} — Stock: {v.stock_quantity}</span>
               <span className="shrink-0 text-[var(--muted)]">{v.sku}</span>
             </li>
@@ -128,11 +134,11 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
           ))}
         </ul>
         <form onSubmit={handleAddNote} className="mt-4 flex flex-wrap gap-2">
-          <select name="noteType" className="border px-3 py-2 text-sm">
+          <Select name="noteType" defaultValue="TOP">
             <option value="TOP">Top</option>
             <option value="HEART">Heart</option>
             <option value="BASE">Base</option>
-          </select>
+          </Select>
           <Input name="name" placeholder="Note name" required className="max-w-xs" />
           <Button type="submit">Add Note</Button>
         </form>
@@ -142,12 +148,23 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
         <h2 className="font-display text-xl">Images</h2>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
           {(product.images ?? []).map((img) => (
-            <div key={img.id} className="relative aspect-square border">
+            <div key={img.id} className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)]">
               <Image src={img.image_url} alt={img.alt_text || ""} fill className="object-cover" />
               <button
                 type="button"
-                className="absolute right-1 top-1 bg-white px-2 py-1 text-xs"
-                onClick={() => deleteProductImage(img.id, product.id).then(() => toast.success("Deleted"))}
+                className="absolute right-1 top-1 cursor-pointer rounded-[var(--radius-sm)] bg-white px-2 py-1 text-xs transition-colors hover:bg-[var(--surface)]"
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Delete this image?",
+                    description: "The image will be permanently removed from this product.",
+                    confirmLabel: "Delete image",
+                    variant: "destructive",
+                  });
+                  if (!ok) return;
+                  await deleteProductImage(img.id, product.id);
+                  toast.success("Image deleted");
+                  router.refresh();
+                }}
               >
                 Delete
               </button>

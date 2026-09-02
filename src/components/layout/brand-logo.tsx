@@ -18,8 +18,8 @@ export function BrandLogo({ className, variant = "full" }: BrandLogoProps) {
   return (
     <Link
       href="/"
-      className={cn("inline-flex shrink-0 items-center gap-2.5", className)}
-      aria-label="Bollybee home"
+      className={cn("inline-flex shrink-0 items-center gap-2.5 transition-opacity hover:opacity-80", className)}
+      aria-label="Bollybee Fragrance Lab home"
     >
       <Image
         src="/brand/bollybee-mark.png"
@@ -27,12 +27,16 @@ export function BrandLogo({ className, variant = "full" }: BrandLogoProps) {
         width={displayWidth}
         height={displayHeight}
         className="block shrink-0"
-        unoptimized
         priority
       />
       {variant === "full" && (
-        <span className="hidden font-display text-xl tracking-[0.04em] text-[var(--plum)] sm:inline md:text-2xl">
-          Bollybee
+        <span className="hidden flex-col leading-none sm:flex">
+          <span className="font-brand text-[1.35rem] font-normal tracking-[0.04em] text-[var(--plum)] md:text-[1.65rem]">
+            Bollybee
+          </span>
+          <span className="mt-1.5 font-sans text-[9px] font-medium uppercase tracking-[0.32em] text-[var(--plum)]/75 md:text-[10px]">
+            Fragrance Lab
+          </span>
         </span>
       )}
     </Link>

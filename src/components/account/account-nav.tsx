@@ -1,61 +1,111 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { signOut } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
+import { usePathname, useRouter } from "next/navigation";
+import { Heart, MapPin, Package } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils";
 
-const LINKS = [
-  { href: "/account/orders", label: "Orders" },
-  { href: "/account/addresses", label: "Addresses" },
-  { href: "/account/wishlist", label: "Wishlist" },
-];
+const TABS = [
+  { href: "/account/orders", label: "Orders", icon: Package },
+  { href: "/account/addresses", label: "Addresses", icon: MapPin },
+  { href: "/account/wishlist", label: "Wishlist", icon: Heart },
+] as const;
 
-export async function AccountNav({ active }: { active: string }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/account/login");
+export function AccountHeader() {
+  const router = useRouter();
+  const [firstName, setFirstName] = useState<string | null>(null);
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .maybeSingle();
+  useEffect(() => {
+    const supabase = createClient();
 
-  const firstName =
-    profile?.full_name?.trim().split(/\s+/)[0] ||
-    (user.user_metadata?.full_name as string | undefined)?.split(/\s+/)[0] ||
-    user.email?.split("@")[0] ||
-    "there";
+    async function loadUser() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const name =
+        profile?.full_name?.trim().split(/\s+/)[0] ||
+        (user.user_metadata?.full_name as string | undefined)?.trim().split(/\s+/)[0] ||
+        user.email?.split("@")[0] ||
+        "there";
+
+      setFirstName(name.charAt(0).toUpperCase() + name.slice(1));
+    }
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      loadUser();
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
-    <div className="mb-8 flex flex-wrap items-start justify-between gap-4 border-b border-[var(--border)] pb-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <p className="text-sm text-[var(--muted-foreground)]">Hello, {firstName}</p>
-        <nav className="mt-3 flex flex-wrap gap-4">
-          {LINKS.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`text-sm ${active === l.href ? "font-medium text-[var(--plum)] underline" : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"}`}
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        <p className="text-[10px] uppercase tracking-[0.24em] text-[var(--muted)]">
+          My account
+        </p>
+        <h1 className="mt-2 font-display text-2xl text-[var(--foreground)] sm:text-3xl md:text-4xl">
+          {firstName ? `Hello, ${firstName}` : "Welcome back"}
+        </h1>
       </div>
-      <form
-        action={async () => {
-          "use server";
-          await signOut();
-          redirect("/");
-        }}
+      <button
+        type="button"
+        onClick={handleSignOut}
+        className="cursor-pointer text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--plum)]"
       >
-        <Button type="submit" variant="outline" size="sm">
-          Sign Out
-        </Button>
-      </form>
+        Sign out
+      </button>
     </div>
+  );
+}
+
+export function AccountTabs() {
+  const pathname = usePathname();
+
+  return (
+    <nav
+      className="scroll-touch mt-8 flex gap-1 overflow-x-auto border-b border-[var(--border)] pb-px"
+      aria-label="Account sections"
+    >
+      {TABS.map(({ href, label, icon: Icon }) => {
+        const active = pathname === href;
+        return (
+          <Link
+            key={href}
+            href={href}
+            className={cn(
+              "flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-sm transition-colors -mb-px",
+              active
+                ? "border-[var(--plum)] font-medium text-[var(--plum)]"
+                : "border-transparent text-[var(--muted-foreground)] hover:border-[var(--border)] hover:text-[var(--foreground)]"
+            )}
+          >
+            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} aria-hidden />
+            {label}
+          </Link>
+        );
+      })}
+    </nav>
   );
 }

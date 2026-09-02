@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap");
 @import "tailwindcss";
 
 :root {
@@ -17,7 +17,10 @@
   --border: #e5ddd4;
   --ring: #c4a4a4;
   --destructive: #b91c1c;
-  --radius: 0.25rem;
+  --radius: 0.75rem;
+  --radius-sm: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
 }
 
 @theme inline {
@@ -35,7 +38,12 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
   --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-brand: "Bodoni Moda", "Cormorant Garamond", Georgia, serif;
   --font-sans: "Inter", system-ui, sans-serif;
 }
 
@@ -49,6 +57,71 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   overflow-x: clip;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Horizontal scroll regions (tabs, toolbars) */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+/* Admin tables — card layout on small screens */
+@media (max-width: 767px) {
+  .admin-table {
+    min-width: 0 !important;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table tbody {
+    display: block;
+  }
+
+  .admin-table tbody > tr {
+    display: block;
+    margin: 0 1rem 0.75rem;
+    overflow: hidden;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius);
+    background: white;
+  }
+
+  .admin-table tbody tr:last-child {
+    margin-bottom: 1rem;
+  }
+
+  .admin-table tbody td {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+  }
+
+  .admin-table tbody td:last-child {
+    border-bottom: none;
+  }
+
+  .admin-table tbody td::before {
+    content: attr(data-label);
+    flex-shrink: 0;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+  }
+
+  .admin-table tbody td[data-label=""]::before {
+    content: none;
+  }
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -58,6 +131,65 @@ h1, h2, h3, h4, h5, h6 {
 
 .font-display {
   font-family: var(--font-serif);
+}
+
+.font-brand {
+  font-family: var(--font-brand);
+  font-optical-sizing: auto;
+}
+
+@layer base {
+  a[href],
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  input[type="submit"]:not(:disabled),
+  input[type="button"]:not(:disabled),
+  input[type="reset"]:not(:disabled),
+  select:not(:disabled),
+  summary,
+  label[for] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  a[href] {
+    transition:
+      color 0.15s ease,
+      opacity 0.15s ease,
+      text-decoration-color 0.15s ease,
+      border-color 0.15s ease,
+      background-color 0.15s ease;
+  }
+
+  /* Plain text links — button-styled links keep their own hover colors */
+  a[href]:not(.inline-flex):hover {
+    color: var(--plum);
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      opacity 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+}
+
+/* Shared soft surfaces — cards, panels, section containers */
+.brand-panel {
+  border-radius: var(--radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.brand-panel-xl {
+  border-radius: var(--radius-xl);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
 }
 
 @keyframes shimmer {
@@ -112,7 +244,36 @@ h1, h2, h3, h4, h5, h6 {
   color: rgb(255 255 255 / 0.35);
 }
 
+@keyframes footer-social-roll {
+  0%,
+  82%,
+  100% {
+    transform: rotate(0deg);
+  }
+  88% {
+    transform: rotate(360deg);
+  }
+}
+
+.footer-social-roll {
+  display: inline-flex;
+  animation: footer-social-roll 5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.footer-social-roll-delay-1 {
+  animation-delay: 0.45s;
+}
+
+.footer-social-roll-delay-2 {
+  animation-delay: 0.9s;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .footer-social-roll {
+    animation: none;
+  }
+
   .trust-marquee-track {
     animation: none;
     width: 100%;

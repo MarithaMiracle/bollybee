@@ -1,3 +1,9 @@
+import {
+  CONTACT_EMAIL,
+  CONTACT_LOCATION,
+} from "@/lib/contact-info";
+import { SITE_DOMAIN, SITE_URL, emailPublicBaseUrl } from "@/lib/site";
+
 const BRAND = {
   plum: "#5c3d4a",
   blush: "#ede4e0",
@@ -6,16 +12,32 @@ const BRAND = {
   muted: "#6b6560",
 };
 
-function appUrl() {
-  return (process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app").replace(/\/$/, "");
+interface EmailLayoutOptions {
+  /** When false, footer omits email (use when body already includes it). */
+  footerEmail?: boolean;
 }
 
 function logoUrl() {
-  return `${appUrl()}/brand/bollybee-mark.png`;
+  return `${emailPublicBaseUrl()}/brand/bollybee-mark.png`;
 }
 
-export function emailLayout(content: string, preheader = "") {
-  const home = appUrl();
+function emailContactFooter(includeEmail: boolean) {
+  if (includeEmail) {
+    return `<p style="margin:12px 0 0;font-size:12px;line-height:1.5;color:${BRAND.muted};">
+    <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};text-decoration:none;">${CONTACT_EMAIL}</a>
+    · ${CONTACT_LOCATION}
+  </p>`;
+  }
+  return `<p style="margin:12px 0 0;font-size:12px;line-height:1.5;color:${BRAND.muted};">${CONTACT_LOCATION}</p>`;
+}
+
+export function emailLayout(
+  content: string,
+  preheader = "",
+  options: EmailLayoutOptions = {}
+) {
+  const includeFooterEmail = options.footerEmail !== false;
+  const home = SITE_URL;
   const logo = logoUrl();
 
   return `<!DOCTYPE html>
@@ -48,7 +70,8 @@ export function emailLayout(content: string, preheader = "") {
           <tr>
             <td style="padding:20px 32px 28px;text-align:center;border-top:1px solid #e5ddd4;font-family:Inter,Arial,sans-serif;font-size:12px;color:${BRAND.muted};">
               <p style="margin:0 0 8px;">Soft luxury, bottled.</p>
-              <p style="margin:0;"><a href="${home}" style="color:${BRAND.plum};">${home.replace(/^https?:\/\//, "")}</a></p>
+              <p style="margin:0;"><a href="${home}" style="color:${BRAND.plum};">${SITE_DOMAIN}</a></p>
+              ${emailContactFooter(includeFooterEmail)}
             </td>
           </tr>
         </table>
@@ -66,16 +89,30 @@ function button(href: string, label: string) {
 }
 
 export function welcomeEmail(firstName: string) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   return {
     subject: "Welcome to Bollybee",
     html: emailLayout(
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Welcome, ${firstName}</h1>
       <p style="margin:0 0 16px;color:${BRAND.muted};">Thank you for joining Bollybee. Discover premium fragrances crafted for confidence, warmth, and modern Nigerian luxury.</p>
       <p style="margin:0;">Your account lets you track orders, save addresses, and build your wishlist.</p>
-      ${button(`${appUrl}/shop`, "Shop fragrances")}
-      ${button(`${appUrl}/sample-packs`, "Try sample packs")}`,
+      ${button(`${SITE_URL}/shop`, "Shop fragrances")}
+      ${button(`${SITE_URL}/sample-packs`, "Try sample packs")}`,
       `Welcome to Bollybee, ${firstName}`
+    ),
+  };
+}
+
+export function passwordResetEmail(resetLink: string) {
+  return {
+    subject: "Reset your Bollybee password",
+    html: emailLayout(
+      `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Reset your password</h1>
+      <p style="margin:0 0 16px;color:${BRAND.muted};">We received a request to reset the password for your Bollybee account. Click the button below to choose a new password.</p>
+      <p style="margin:0 0 16px;color:${BRAND.muted};">This link expires after a short time. If you didn&apos;t request a reset, you can safely ignore this email, your password won&apos;t change.</p>
+      ${button(resetLink, "Reset password")}
+      <p style="margin:24px 0 0;font-size:13px;color:${BRAND.muted};">Need help? Reply to this email or contact us at <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a>.</p>`,
+      "Reset your Bollybee password",
+      { footerEmail: false }
     ),
   };
 }
@@ -87,7 +124,6 @@ export function orderConfirmationEmail(order: {
   email: string;
   items: { productName: string; quantity: number; total: number }[];
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   const itemsHtml = order.items
     .map(
       (i) =>
@@ -110,8 +146,10 @@ export function orderConfirmationEmail(order: {
           <td style="padding:12px 0;text-align:right;font-weight:600;">₦${order.total.toLocaleString()}</td>
         </tr>
       </table>
-      ${button(`${appUrl}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "Track your order")}`,
-      `Order ${order.orderNumber} confirmed`
+      ${button(`${SITE_URL}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "Track your order")}
+      <p style="margin:24px 0 0;font-size:13px;color:${BRAND.muted};">Questions about your order? Email <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a>.</p>`,
+      `Order ${order.orderNumber} confirmed`,
+      { footerEmail: false }
     ),
   };
 }
@@ -131,7 +169,6 @@ export function orderStatusEmail(order: {
   email: string;
   fulfillmentStatus: string;
 }) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   const label = STATUS_LABELS[order.fulfillmentStatus] ?? order.fulfillmentStatus.replace(/_/g, " ");
 
   return {
@@ -140,20 +177,21 @@ export function orderStatusEmail(order: {
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Order update</h1>
       <p style="margin:0 0 8px;">Hi ${order.firstName},</p>
       <p style="margin:0 0 16px;color:${BRAND.muted};">Your order <strong>${order.orderNumber}</strong> is now: <strong>${label}</strong>.</p>
-      ${button(`${appUrl}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "View order status")}`,
-      `${order.orderNumber} — ${label}`
+      ${button(`${SITE_URL}/track-order?order=${encodeURIComponent(order.orderNumber)}&email=${encodeURIComponent(order.email)}`, "View order status")}
+      <p style="margin:24px 0 0;font-size:13px;color:${BRAND.muted};">Need help? Contact us at <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a>.</p>`,
+      `${order.orderNumber} — ${label}`,
+      { footerEmail: false }
     ),
   };
 }
 
 export function newsletterWelcomeEmail() {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   return {
     subject: "You're in the Bollybee Circle",
     html: emailLayout(
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Welcome to the Circle</h1>
       <p style="margin:0 0 16px;color:${BRAND.muted};">You'll be first to know about new releases, exclusive offers, and fragrance tips from Bollybee.</p>
-      ${button(`${appUrl}/shop`, "Explore the collection")}`,
+      ${button(`${SITE_URL}/shop`, "Explore the collection")}`,
       "Welcome to the Bollybee Circle"
     ),
   };
@@ -165,41 +203,39 @@ export function contactAcknowledgementEmail(name: string) {
     html: emailLayout(
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Message received</h1>
       <p style="margin:0 0 16px;">Dear ${name},</p>
-      <p style="margin:0;color:${BRAND.muted};">Thank you for contacting Bollybee. Our team will reply by email as soon as we can.</p>`,
-      "We received your message"
+      <p style="margin:0;color:${BRAND.muted};">Thank you for contacting Bollybee. Our team will reply from <a href="mailto:${CONTACT_EMAIL}" style="color:${BRAND.plum};">${CONTACT_EMAIL}</a> as soon as we can.</p>`,
+      "We received your message",
+      { footerEmail: false }
     ),
   };
 }
 
 export function adminNewOrderEmail(orderNumber: string, total: number) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   return {
     subject: `New order — ${orderNumber}`,
     html: emailLayout(
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">New order</h1>
       <p style="margin:0 0 16px;color:${BRAND.muted};">Order <strong>${orderNumber}</strong> for <strong>₦${total.toLocaleString()}</strong> was placed.</p>
-      ${button(`${appUrl}/admin/orders`, "View in admin")}`,
+      ${button(`${SITE_URL}/admin/orders`, "View in admin")}`,
       `New order ${orderNumber}`
     ),
   };
 }
 
 export function abandonedCartEmail(firstName: string, itemCount: number) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   return {
     subject: "You left something behind — Bollybee",
     html: emailLayout(
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Still thinking it over?</h1>
       <p style="margin:0 0 16px;">Hi ${firstName || "there"},</p>
       <p style="margin:0 0 16px;color:${BRAND.muted};">You have ${itemCount} item${itemCount !== 1 ? "s" : ""} waiting in your cart. Your selected fragrances are ready when you are.</p>
-      ${button(`${appUrl}/cart`, "Complete your order")}`,
+      ${button(`${SITE_URL}/cart`, "Complete your order")}`,
       "Your Bollybee cart is waiting"
     ),
   };
 }
 
 export function lowStockAlertEmail(items: { productName: string; variationName: string; stock: number }[]) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bollybee.vercel.app";
   const rows = items
     .map(
       (i) =>
@@ -216,7 +252,7 @@ export function lowStockAlertEmail(items: { productName: string; variationName: 
       `<h1 style="margin:0 0 12px;font-family:Georgia,serif;font-weight:400;font-size:28px;color:${BRAND.plum};">Low stock alert</h1>
       <p style="margin:0 0 16px;color:${BRAND.muted};">The following variations are running low:</p>
       <table width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;">${rows}</table>
-      ${button(`${appUrl}/admin/products`, "Manage inventory")}`,
+      ${button(`${SITE_URL}/admin/products`, "Manage inventory")}`,
       "Low stock alert"
     ),
   };

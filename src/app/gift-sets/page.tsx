@@ -1,15 +1,17 @@
 import { getGiftSets } from "@/lib/data/products";
 import { GiftSetCard } from "@/components/product/gift-set-card";
+import { BackLink } from "@/components/layout/back-link";
 
-export const dynamic = "force-dynamic";
 export const metadata = { title: "Gift Sets" };
+export const revalidate = 60;
 
 export default async function GiftSetsPage() {
   const sets = await getGiftSets();
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
-      <h1 className="font-display text-4xl md:text-5xl">Gift Sets</h1>
+      <BackLink href="/shop" label="Back to shop" className="mb-6" />
+      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl">Gift Sets</h1>
       <p className="mt-2 text-sm text-[var(--muted-foreground)]">
         Curated fragrance collections, beautifully packaged.
       </p>

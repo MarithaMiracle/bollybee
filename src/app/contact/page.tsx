@@ -2,15 +2,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { ContactForm } from "@/components/forms/contact-form";
+import { SoftDivider } from "@/components/layout/wave-separator";
+import { BackLink } from "@/components/layout/back-link";
+import {
+  CONTACT_EMAIL,
+  CONTACT_LOCATION,
+  CONTACT_PHONE,
+  CONTACT_PHONE_HREF,
+  SOCIAL_LINKS,
+} from "@/lib/contact-info";
 
 export const metadata = { title: "Contact" };
 
 const CONTACT_IMAGE = "/brand/bollybee-bottle-water-splash-greyscale.png";
 
 const CONTACT_ROWS = [
-  { label: "Email", value: "hello@bollybee.com", href: "mailto:hello@bollybee.com" },
-  { label: "Phone", value: "+234 XXX XXX XXXX" },
-  { label: "Location", value: "Lagos, Nigeria" },
+  { label: "Email", value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+  { label: "Phone", value: CONTACT_PHONE, href: CONTACT_PHONE_HREF },
+  { label: "Location", value: CONTACT_LOCATION },
 ] as const;
 
 const QUICK_LINKS = [
@@ -21,7 +30,7 @@ const QUICK_LINKS = [
 export default function ContactPage() {
   return (
     <div className="relative min-h-screen">
-      <div className="pointer-events-none fixed inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10">
         <Image
           src={CONTACT_IMAGE}
           alt=""
@@ -35,16 +44,19 @@ export default function ContactPage() {
       </div>
 
       <div className="mx-auto max-w-3xl px-4 py-14 md:px-8 md:py-24">
-        <article className="overflow-hidden bg-[var(--satin-light)] text-[var(--foreground)] shadow-[0_24px_80px_-20px_rgba(0,0,0,0.45)]">
-          <header className="border-b border-[var(--foreground)]/10 px-5 py-8 text-center sm:px-8 sm:py-10 md:px-12 md:py-12">
+        <BackLink href="/" label="Back to home" className="mb-6 text-white/90 hover:text-white" />
+        <article className="brand-panel-xl overflow-hidden bg-[var(--satin-light)] text-[var(--foreground)] shadow-[0_24px_80px_-20px_rgba(0,0,0,0.45)]">
+          <header className="px-5 py-8 text-center sm:px-8 sm:py-10 md:px-12 md:py-12">
             <p className="text-[10px] font-medium uppercase tracking-[0.35em]">Get in touch</p>
-            <h1 className="mt-4 font-display text-4xl md:text-5xl">Contact us</h1>
-            <p className="mt-3 font-display text-xl italic md:text-2xl">
+            <h1 className="mt-4 font-display text-3xl sm:text-4xl md:text-5xl">Contact us</h1>
+            <p className="mt-3 font-display text-lg italic sm:text-xl md:text-2xl">
               We&apos;d love to hear from you
             </p>
           </header>
 
-          <section className="border-b border-[var(--foreground)]/10 bg-[var(--background)]/90 px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12">
+          <SoftDivider tone="plum" className="mx-auto max-w-[min(100%,20rem)] opacity-40" />
+
+          <section className="bg-[var(--background)]/90 px-5 py-8 sm:px-8 sm:py-10 md:px-12 md:py-12">
             <div className="mb-8 text-center md:text-left">
               <h2 className="font-display text-2xl md:text-3xl">Write to us</h2>
               <p className="mt-2 text-sm leading-relaxed md:text-base">
@@ -81,7 +93,31 @@ export default function ContactPage() {
               ))}
             </dl>
 
-            <div className="mx-auto mt-8 flex max-w-md flex-wrap gap-4 border-t border-[var(--foreground)]/10 pt-6 text-sm font-medium">
+            <dl className="mx-auto mt-6 grid max-w-md gap-4">
+              {SOCIAL_LINKS.map((social) => (
+                <div
+                  key={social.label}
+                  className="grid grid-cols-[5.5rem_1fr] items-baseline gap-x-4 gap-y-1 sm:grid-cols-[6rem_1fr]"
+                >
+                  <dt className="text-[10px] font-medium uppercase tracking-[0.18em]">
+                    {social.label}
+                  </dt>
+                  <dd className="break-words font-display text-lg leading-snug">
+                    <a
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline-offset-4 hover:underline"
+                    >
+                      {social.handle}
+                    </a>
+                  </dd>
+                </div>
+              ))}
+            </dl>
+
+            <SoftDivider tone="border" className="mx-auto mt-8 max-w-md opacity-60" />
+            <div className="mx-auto mt-6 flex max-w-md flex-wrap gap-4 text-sm font-medium">
               {QUICK_LINKS.map((link) => (
                 <Link
                   key={link.href}

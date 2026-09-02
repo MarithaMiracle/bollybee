@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select } from "@/components/ui/select";
+import { BackLink } from "@/components/layout/back-link";
 import { useCart } from "@/components/cart/cart-provider";
 import { initializeCheckout, getCheckoutDefaults } from "@/actions/checkout";
 import { validatePromoCode } from "@/actions/promo";
@@ -104,6 +106,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-xl px-4 py-20 text-center">
+        <BackLink href="/shop" label="Back to shop" className="mb-8" />
         <p>Your cart is empty.</p>
         <Button className="mt-4" onClick={() => router.push("/shop")}>Shop Now</Button>
       </div>
@@ -152,6 +155,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
+      <BackLink href="/cart" label="Back to cart" className="mb-6" />
       <div className="mb-10">
         <h1 className="font-display text-3xl sm:text-4xl">Checkout</h1>
         {prefilled && (
@@ -160,7 +164,7 @@ export default function CheckoutPage() {
           </p>
         )}
       </div>
-      <form onSubmit={handleSubmit} className="grid gap-10 lg:grid-cols-[1fr_360px]">
+      <form onSubmit={handleSubmit} className="grid min-w-0 gap-10 lg:grid-cols-[1fr_min(100%,360px)]">
         <div className="space-y-8">
           <section>
             <h2 className="mb-4 font-display text-xl">Personal Information</h2>
@@ -196,35 +200,33 @@ export default function CheckoutPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="state">State</Label>
-                <select
+                <Select
                   id="state"
                   required
                   value={form.shippingState}
                   onChange={(e) => setForm({ ...form, shippingState: e.target.value, shippingLga: "" })}
-                  className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
                 >
                   <option value="">Select state</option>
                   {states.map((s) => (
                     <option key={s.id} value={s.name}>{s.name}</option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <Label htmlFor="lga">LGA</Label>
                 {lgas.length > 0 ? (
-                  <select
+                  <Select
                     id="lga"
                     required
                     value={form.shippingLga}
                     onChange={(e) => setForm({ ...form, shippingLga: e.target.value })}
-                    className="flex h-11 w-full border border-[var(--border)] bg-white px-4 text-sm"
                     disabled={!form.shippingState}
                   >
                     <option value="">Select LGA</option>
                     {lgas.map((l) => (
                       <option key={l.id} value={l.name}>{l.name}</option>
                     ))}
-                  </select>
+                  </Select>
                 ) : (
                   <Input
                     id="lga"
@@ -272,7 +274,7 @@ export default function CheckoutPage() {
           </section>
         </div>
 
-        <aside className="h-fit border border-[var(--border)] bg-white p-6">
+        <aside className="brand-panel h-fit bg-white p-6">
           <h2 className="font-display text-xl">Order Review</h2>
           <ul className="mt-4 space-y-2 text-sm">
             {items.map((i) => (
@@ -283,14 +285,14 @@ export default function CheckoutPage() {
             ))}
           </ul>
 
-          <div className="mt-4 flex gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <Input
               placeholder="Promo code"
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-              className="flex-1"
+              className="min-w-0 flex-1"
             />
-            <Button type="button" variant="outline" onClick={handleApplyPromo} disabled={promoLoading}>
+            <Button type="button" variant="outline" onClick={handleApplyPromo} disabled={promoLoading} className="shrink-0">
               Apply
             </Button>
           </div>

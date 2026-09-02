@@ -2,7 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { sendTemplatedEmail, welcomeEmail, getResendTestInbox } from "@/lib/email";
+import { createServiceClient } from "@/lib/supabase/admin";
+import {
+  sendTemplatedEmail,
+  welcomeEmail,
+  passwordResetEmail,
+  getResendTestInbox,
+} from "@/lib/email";
+import { authCallbackUrl, SITE_URL } from "@/lib/site";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -19,14 +26,13 @@ export async function signIn(formData: FormData) {
 
 export async function signUp(formData: FormData) {
   const supabase = await createClient();
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 
   const { error } = await supabase.auth.signUp({
     email: formData.get("email") as string,
     password: formData.get("password") as string,
     options: {
       data: { full_name: formData.get("fullName") as string },
-      emailRedirectTo: `${appUrl}/account/login`,
+      emailRedirectTo: authCallbackUrl("/account/orders"),
     },
   });
 
@@ -67,6 +73,70 @@ export async function signUp(formData: FormData) {
 export async function signOut() {
   const supabase = await createClient();
   await supabase.auth.signOut();
+  revalidatePath("/", "layout");
+  return { success: true };
+}
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = (formData.get("email") as string)?.trim().toLowerCase();
+
+  if (!email) return { error: "Email is required" };
+
+  const redirectTo = `${SITE_URL}/account/reset-password`;
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase.auth.admin.generateLink({
+      type: "recovery",
+      email,
+      options: { redirectTo },
+    });
+
+    const resetLink = data?.properties?.action_link;
+
+    if (!error && resetLink) {
+      const sent = await sendTemplatedEmail(email, passwordResetEmail(resetLink));
+      const testInbox = getResendTestInbox();
+
+      if (!sent && !testInbox) {
+        return { error: "Unable to send reset email. Please try again later." };
+      }
+
+      return { success: true, testInbox };
+    }
+  } catch (e) {
+    console.error("[auth] password reset failed:", e);
+    return { error: "Unable to send reset email. Please try again later." };
+  }
+
+  // Don't reveal whether the email exists
+  return { success: true };
+}
+
+export async function updatePassword(formData: FormData) {
+  const supabase = await createClient();
+  const password = formData.get("password") as string;
+  const confirmPassword = formData.get("confirmPassword") as string;
+
+  if (!password || password.length < 6) {
+    return { error: "Password must be at least 6 characters" };
+  }
+  if (password !== confirmPassword) {
+    return { error: "Passwords do not match" };
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Your reset link has expired. Please request a new one." };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) return { error: error.message ?? "Unable to update password" };
+
   revalidatePath("/", "layout");
   return { success: true };
 }

@@ -51,7 +51,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             href={href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-sm px-3 py-2.5 text-sm transition-colors",
+              "flex items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm transition-colors",
               active
                 ? "bg-white/15 text-white"
                 : "text-white/70 hover:bg-white/10 hover:text-white"
@@ -113,7 +113,7 @@ export function AdminSidebar() {
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-sm px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex w-full items-center gap-3 rounded-[var(--radius-sm)] px-3 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
         >
           <LogOut className="h-4 w-4" />
           Log out
@@ -140,7 +140,7 @@ export function AdminSidebar() {
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="rounded-sm p-2 text-white"
+          className="cursor-pointer rounded-[var(--radius-sm)] p-2 text-white transition-opacity hover:opacity-80"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -156,11 +156,11 @@ export function AdminSidebar() {
             aria-label="Close menu"
             onClick={() => setMobileOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-[var(--plum)] shadow-xl">
+          <aside className="absolute inset-y-0 left-0 flex w-[min(100%,18rem)] flex-col bg-[var(--plum)] shadow-xl sm:w-72">
             <button
               type="button"
               onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-3 rounded-sm p-2 text-white/70 hover:text-white"
+              className="absolute right-3 top-3 cursor-pointer rounded-[var(--radius-sm)] p-2 text-white/70 transition-colors hover:text-white"
               aria-label="Close menu"
             >
               <X className="h-5 w-5" />

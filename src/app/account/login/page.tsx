@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { signIn, signUp } from "@/actions/auth";
+import { BackLink } from "@/components/layout/back-link";
 import { cn } from "@/lib/utils";
 
 const SATIN_BG = "/brand/admin-login-satin-bg.png";
@@ -63,7 +64,7 @@ export default function AccountLoginPage() {
 
   return (
     <div className="relative flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-12 md:min-h-[calc(100vh-5rem)]">
-      <div className="pointer-events-none fixed inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10">
         <Image
           src={SATIN_BG}
           alt=""
@@ -77,7 +78,8 @@ export default function AccountLoginPage() {
       </div>
 
       <div className="w-full max-w-md">
-        <article className="border border-[var(--border)]/80 bg-[var(--background)]/94 p-6 shadow-sm backdrop-blur-md sm:p-8 md:p-10">
+        <BackLink href="/" label="Back to home" className="mb-6 text-white/90 hover:text-white" />
+        <article className="brand-panel-xl border-[var(--border)]/80 bg-[var(--background)]/94 p-6 shadow-sm backdrop-blur-md sm:p-8 md:p-10">
           <div className="text-center">
             <h1 className="font-display text-3xl text-[var(--foreground)] md:text-4xl">
               {mode === "login" ? "Welcome back" : "Join Bollybee"}
@@ -89,14 +91,14 @@ export default function AccountLoginPage() {
             </p>
           </div>
 
-          <div className="mt-8 flex border border-[var(--border)] bg-[var(--surface)] p-1">
+          <div className="mt-8 flex rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-1">
             <button
               type="button"
               onClick={() => setMode("login")}
               className={cn(
                 "flex-1 py-2 text-xs font-medium uppercase tracking-wider transition-colors",
                 mode === "login"
-                  ? "bg-white text-[var(--foreground)] shadow-sm"
+                  ? "rounded-[var(--radius-sm)] bg-white text-[var(--foreground)] shadow-sm"
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               )}
             >
@@ -108,7 +110,7 @@ export default function AccountLoginPage() {
               className={cn(
                 "flex-1 py-2 text-xs font-medium uppercase tracking-wider transition-colors",
                 mode === "register"
-                  ? "bg-white text-[var(--foreground)] shadow-sm"
+                  ? "rounded-[var(--radius-sm)] bg-white text-[var(--foreground)] shadow-sm"
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
               )}
             >
@@ -128,7 +130,17 @@ export default function AccountLoginPage() {
               <Input id="email" name="email" type="email" required autoComplete="email" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="password">Password</Label>
+                {mode === "login" && (
+                  <Link
+                    href="/account/forgot-password"
+                    className="text-xs text-[var(--plum)] underline-offset-4 hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                )}
+              </div>
               <PasswordInput
                 id="password"
                 name="password"

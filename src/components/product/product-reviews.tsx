@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Pagination } from "@/components/ui/pagination";
 import { submitReview } from "@/actions/reviews";
-import { Star } from "lucide-react";
+import { StarRating, StarRatingInput } from "@/components/product/star-rating";
+import { buildPageHref, REVIEWS_PAGE_SIZE } from "@/lib/pagination";
 
 export interface ProductReview {
   id: string;
@@ -22,6 +24,9 @@ interface ProductReviewsProps {
   productId: string;
   productSlug: string;
   reviews: ProductReview[];
+  totalReviews: number;
+  reviewPage: number;
+  reviewAverage: number | null;
   isLoggedIn: boolean;
 }
 
@@ -29,19 +34,21 @@ export function ProductReviews({
   productId,
   productSlug,
   reviews,
+  totalReviews,
+  reviewPage,
+  reviewAverage,
   isLoggedIn,
 }: ProductReviewsProps) {
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
 
-  const avg =
-    reviews.length > 0
-      ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-      : null;
-
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (rating < 1) {
+      toast.error("Please select a star rating");
+      return;
+    }
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     formData.set("productId", productId);
@@ -54,6 +61,7 @@ export function ProductReviews({
     } else {
       toast.success(result.message ?? "Review submitted");
       setShowForm(false);
+      setRating(0);
       (e.target as HTMLFormElement).reset();
     }
   }
@@ -63,10 +71,14 @@ export function ProductReviews({
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-display text-2xl md:text-3xl">Reviews</h2>
-          {avg && (
-            <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              {avg} out of 5 · {reviews.length} review{reviews.length !== 1 ? "s" : ""}
-            </p>
+          {reviewAverage !== null && totalReviews > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <StarRating rating={reviewAverage} size="md" />
+              <p className="text-sm text-[var(--muted-foreground)]">
+                {reviewAverage.toFixed(1)} out of 5 · {totalReviews} review
+                {totalReviews !== 1 ? "s" : ""}
+              </p>
+            </div>
           )}
         </div>
         {isLoggedIn && (
@@ -77,22 +89,11 @@ export function ProductReviews({
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mb-8 max-w-lg space-y-4 border bg-white p-6">
+        <form onSubmit={handleSubmit} className="mb-8 max-w-lg space-y-4 brand-panel bg-white p-6">
           <div>
             <Label>Rating</Label>
-            <div className="mt-2 flex gap-1">
-              {[1, 2, 3, 4, 5].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => setRating(n)}
-                  aria-label={`${n} stars`}
-                >
-                  <Star
-                    className={`h-5 w-5 ${n <= rating ? "fill-[var(--plum)] text-[var(--plum)]" : "text-[var(--border)]"}`}
-                  />
-                </button>
-              ))}
+            <div className="mt-2">
+              <StarRatingInput value={rating} onChange={setRating} />
             </div>
           </div>
           <div>
@@ -111,32 +112,40 @@ export function ProductReviews({
 
       {!isLoggedIn && (
         <p className="mb-6 text-sm text-[var(--muted-foreground)]">
-          <a href="/account/login" className="text-[var(--plum)] underline">Sign in</a> to leave a review.
+          <a href="/account/login" className="text-[var(--plum)] underline">
+            Sign in
+          </a>{" "}
+          to leave a review.
         </p>
       )}
 
-      {reviews.length === 0 ? (
+      {totalReviews === 0 ? (
         <p className="text-sm text-[var(--muted-foreground)]">No reviews yet. Be the first!</p>
       ) : (
-        <ul className="divide-y divide-[var(--border)] border border-[var(--border)] bg-white">
-          {reviews.map((r) => (
-            <li key={r.id} className="p-5">
-              <div className="flex items-center gap-2">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <Star
-                      key={n}
-                      className={`h-3.5 w-3.5 ${n <= r.rating ? "fill-[var(--plum)] text-[var(--plum)]" : "text-[var(--border)]"}`}
-                    />
-                  ))}
+        <>
+          <ul className="brand-panel divide-y divide-[var(--border)] bg-white">
+            {reviews.map((r) => (
+              <li key={r.id} className="p-5">
+                <div className="flex items-center gap-2">
+                  <StarRating rating={r.rating} />
+                  <span className="text-sm font-medium">{r.author_name}</span>
                 </div>
-                <span className="text-sm font-medium">{r.author_name}</span>
-              </div>
-              {r.title && <p className="mt-2 font-display text-lg">{r.title}</p>}
-              <p className="mt-1 text-sm leading-relaxed text-[var(--muted-foreground)]">{r.body}</p>
-            </li>
-          ))}
-        </ul>
+                {r.title && <p className="mt-2 break-words font-display text-base sm:text-lg">{r.title}</p>}
+                <p className="mt-1 text-sm leading-relaxed text-[var(--muted-foreground)]">
+                  {r.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <Pagination
+            page={reviewPage}
+            total={totalReviews}
+            limit={REVIEWS_PAGE_SIZE}
+            buildHref={(p) =>
+              buildPageHref(`/product/${productSlug}`, p, undefined, "reviewPage")
+            }
+          />
+        </>
       )}
     </section>
   );

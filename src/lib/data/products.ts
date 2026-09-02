@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { SHOP_PAGE_SIZE } from "@/lib/pagination";
 import type { Product } from "@/types";
 
 const PRODUCT_SELECT = `
@@ -205,6 +206,6 @@ export async function getOrderByNumberAndEmail(orderNumber: string, email: strin
   return data;
 }
 
-export async function searchProducts(q: string) {
-  return getProducts({ search: q, limit: 24 });
+export async function searchProducts(q: string, page = 1, limit = SHOP_PAGE_SIZE) {
+  return getProducts({ search: q, page, limit });
 }

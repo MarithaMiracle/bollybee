@@ -28,9 +28,9 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <Link
       href={`/product/${product.slug}`}
-      className="group block"
+      className="group block cursor-pointer"
     >
-      <article className="overflow-hidden border border-[var(--border)] bg-white transition-shadow hover:shadow-md">
+      <article className="brand-panel overflow-hidden bg-white transition-shadow hover:shadow-md">
         <div className="relative aspect-[3/4] overflow-hidden bg-[var(--surface)]">
           {image ? (
             <Image
@@ -39,7 +39,7 @@ export function ProductCard({ product }: ProductCardProps) {
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-105"
               sizes="(max-width:768px) 50vw, 25vw"
-              quality={90}
+              quality={75}
             />
           ) : (
             <ProductPlaceholder name={product.name} />
@@ -49,13 +49,13 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.is_bestseller && <Badge variant="bestseller">Bestseller</Badge>}
           </div>
         </div>
-        <div className="space-y-1 p-4">
+        <div className="space-y-1 p-3 sm:p-4">
           {product.fragrance_family && (
             <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
               {fragranceFamilyLabel(product.fragrance_family)}
             </p>
           )}
-          <h3 className="font-display text-lg tracking-wide line-clamp-2">{product.name}</h3>
+          <h3 className="font-display text-base tracking-wide line-clamp-2 transition-colors group-hover:text-[var(--plum)] sm:text-lg">{product.name}</h3>
           <div className="flex items-baseline gap-2">
             <span className="text-sm font-medium">{formatNaira(minPrice)}</span>
             {compareAt && compareAt > minPrice && (

@@ -1,15 +1,22 @@
 import { requireAdmin } from "@/lib/auth";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { adminListParams, escapeIlike } from "@/lib/admin/list-query";
 import { Pagination } from "@/components/ui/pagination";
 import { ADMIN_PAGE_SIZE, buildPageHref, pageRange, parsePage } from "@/lib/pagination";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBadge } from "@/components/admin/admin-badge";
-import { AdminCard, AdminEmpty } from "@/components/admin/admin-card";
+import { AdminEmpty } from "@/components/admin/admin-card";
+import {
+  AdminListToolbarSection,
+  AdminToolbarCard,
+} from "@/components/admin/admin-list-toolbar-section";
 
 export const dynamic = "force-dynamic";
 
+const FILTER_KEYS = ["status"] as const;
+
 interface AdminNewsletterPageProps {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; q?: string; status?: string }>;
 }
 
 export default async function AdminNewsletterPage({ searchParams }: AdminNewsletterPageProps) {
@@ -17,11 +24,18 @@ export default async function AdminNewsletterPage({ searchParams }: AdminNewslet
   const params = await searchParams;
   const page = parsePage(params.page);
   const { from, to } = pageRange(page, ADMIN_PAGE_SIZE);
+  const listParams = adminListParams(params, [...FILTER_KEYS]);
 
   const supabase = createServiceClient();
-  const { data: subs, count } = await supabase
-    .from("newsletter_subscribers")
-    .select("*", { count: "exact" })
+  let query = supabase.from("newsletter_subscribers").select("*", { count: "exact" });
+
+  if (params.q?.trim()) {
+    const term = escapeIlike(params.q.trim());
+    query = query.ilike("email", `%${term}%`);
+  }
+  if (params.status) query = query.eq("status", params.status);
+
+  const { data: subs, count } = await query
     .order("subscribed_at", { ascending: false })
     .range(from, to);
 
@@ -34,9 +48,31 @@ export default async function AdminNewsletterPage({ searchParams }: AdminNewslet
         description={`${total} subscriber${total !== 1 ? "s" : ""}`}
       />
 
-      <AdminCard>
+      <AdminToolbarCard
+        toolbar={
+          <AdminListToolbarSection
+            basePath="/admin/newsletter"
+            initialQuery={params.q}
+            searchPlaceholder="Search email…"
+            filters={[
+              {
+                key: "status",
+                label: "Status",
+                options: [
+                  { value: "SUBSCRIBED", label: "Subscribed" },
+                  { value: "UNSUBSCRIBED", label: "Unsubscribed" },
+                ],
+              },
+            ]}
+          />
+        }
+      >
         {!subs?.length ? (
-          <AdminEmpty message="No newsletter subscribers yet." />
+          <AdminEmpty
+            message={
+              params.q || params.status ? "No subscribers match your filters." : "No newsletter subscribers yet."
+            }
+          />
         ) : (
           <ul className="divide-y divide-[var(--border)]">
             {subs.map((s) => (
@@ -50,13 +86,13 @@ export default async function AdminNewsletterPage({ searchParams }: AdminNewslet
             ))}
           </ul>
         )}
-      </AdminCard>
+      </AdminToolbarCard>
 
       <Pagination
         page={page}
         total={total}
         limit={ADMIN_PAGE_SIZE}
-        buildHref={(p) => buildPageHref("/admin/newsletter", p)}
+        buildHref={(p) => buildPageHref("/admin/newsletter", p, listParams)}
       />
     </div>
   );

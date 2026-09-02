@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
+import { BackLink } from "@/components/layout/back-link";
 
 const SATIN_BG = "/brand/admin-login-satin-bg.png";
 
@@ -41,7 +42,7 @@ function LoginForm() {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center px-4 py-12">
-      <div className="pointer-events-none fixed inset-0 -z-10">
+      <div className="pointer-events-none absolute inset-0 -z-10">
         <Image
           src={SATIN_BG}
           alt=""
@@ -55,7 +56,8 @@ function LoginForm() {
       </div>
 
       <div className="w-full max-w-md">
-        <article className="border border-[var(--border)]/80 bg-[var(--background)]/94 p-8 shadow-sm backdrop-blur-md md:p-10">
+        <BackLink href="/" label="Back to storefront" className="mb-6" />
+        <article className="brand-panel-xl border-[var(--border)]/80 bg-[var(--background)]/94 p-8 shadow-sm backdrop-blur-md md:p-10">
           <div className="flex flex-col items-center text-center">
             <Image
               src="/brand/bollybee-mark.png"
@@ -76,7 +78,7 @@ function LoginForm() {
           </div>
 
           {searchParams.get("error") === "unauthorized" && (
-            <p className="mt-6 rounded-sm bg-red-50 px-4 py-3 text-center text-sm text-red-800">
+            <p className="mt-6 rounded-[var(--radius-sm)] bg-red-50 px-4 py-3 text-center text-sm text-red-800">
               Unauthorized — this account does not have admin access.
             </p>
           )}

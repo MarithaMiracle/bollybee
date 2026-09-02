@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BackLink } from "@/components/layout/back-link";
 import { trackOrder } from "@/actions/orders";
 import { formatNaira, FULFILLMENT_STEPS } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ export default function TrackOrderContent() {
   return (
     <div className="bg-[var(--satin-light)]">
       <div className="mx-auto max-w-xl px-4 py-16 md:px-8 md:py-24">
+      <BackLink href="/" label="Back to home" className="mb-6" />
       <h1 className="font-display text-3xl sm:text-4xl">Track Your Order</h1>
       <p className="mt-2 text-sm text-[var(--muted-foreground)]">
         Enter your order number and email to view status.
@@ -61,7 +63,7 @@ export default function TrackOrderContent() {
       )}
 
       {order && (
-        <div className="mt-10 border border-[var(--border)] bg-white p-6">
+        <div className="brand-panel mt-10 bg-white p-6">
           <p className="font-medium">{order.order_number}</p>
           <p className="text-sm text-[var(--muted)]">{order.fulfillment_status.replace(/_/g, " ")}</p>
           <p className="mt-2 text-lg font-medium">{formatNaira(order.total)}</p>
@@ -69,7 +71,7 @@ export default function TrackOrderContent() {
           <ol className="mt-8 space-y-4">
             {FULFILLMENT_STEPS.map((step, i) => (
               <li key={step.key} className="flex items-center gap-3">
-                <span className={`flex h-6 w-6 items-center justify-center text-[10px] ${i <= currentStepIndex ? "bg-[var(--plum)] text-white" : "border border-[var(--border)] text-[var(--muted)]"}`}>
+                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[10px] ${i <= currentStepIndex ? "bg-[var(--plum)] text-white" : "border border-[var(--border)] text-[var(--muted)]"}`}>
                   {i + 1}
                 </span>
                 <span className={i <= currentStepIndex ? "text-[var(--foreground)]" : "text-[var(--muted)]"}>

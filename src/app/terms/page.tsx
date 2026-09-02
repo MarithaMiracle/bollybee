@@ -11,7 +11,7 @@ const SECTIONS = [
   {
     title: "Agreement to Terms",
     paragraphs: [
-      "These Terms of Service (\"Terms\") govern your access to and use of the Bollybee website and services operated by Bollybee Fragrance Lab (\"Bollybee\", \"we\", \"us\", or \"our\").",
+      "These Terms of Service (\"Terms\") govern your access to and use of bollybeefragrancelab.com and related services operated by Bollybee Fragrance Lab (\"Bollybee\", \"we\", \"us\", or \"our\").",
       "By accessing our website or placing an order, you agree to be bound by these Terms. If you do not agree, you may not use our services.",
     ],
   },
@@ -45,7 +45,7 @@ const SECTIONS = [
       "Due to the nature of fragrance products, we accept returns only for items that are damaged, defective, or incorrectly fulfilled. Items must be reported within 48 hours of delivery with photographic evidence.",
       "Opened or used fragrance products cannot be returned for hygiene and safety reasons, except where they are faulty.",
       "Approved refunds will be processed to the original payment method within 7–14 business days. Shipping fees are non-refundable unless the return is due to our error.",
-      "To request a return or report an issue, contact us at hello@bollybee.com with your order number.",
+      "To request a return or report an issue, contact us at hello@bollybeefragrancelab.com with your order number.",
     ],
   },
   {

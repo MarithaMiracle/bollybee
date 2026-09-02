@@ -2,12 +2,13 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { ProductCard } from "@/components/product/product-card";
 import { ShopSidebarFilters, ShopMobileFilters } from "@/components/shop/shop-filters";
+import { ShopSearchToolbar } from "@/components/shop/shop-search-toolbar";
 import { Pagination } from "@/components/ui/pagination";
 import { getProducts, getCategories } from "@/lib/data/products";
 import { buildPageHref, parsePage, SHOP_PAGE_SIZE } from "@/lib/pagination";
 import { FRAGRANCE_FAMILIES } from "@/lib/utils";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 interface ShopPageProps {
   searchParams: Promise<{
@@ -40,15 +41,33 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
-      <div className="mb-10">
-        <h1 className="font-display text-4xl md:text-5xl">Shop Fragrances</h1>
-        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-          {total} fragrance{total !== 1 ? "s" : ""}
-        </p>
-      </div>
+    <>
+      <h1 className="font-display text-3xl sm:text-4xl md:text-5xl">Shop Fragrances</h1>
+      <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+        {total} fragrance{total !== 1 ? "s" : ""}
+        {params.q ? (
+          <>
+            {" "}
+            matching &ldquo;{params.q}&rdquo;
+            {" · "}
+            <Link
+              href={buildPageHref("/shop", 1, {
+                category: params.category,
+                family: params.family,
+                sort: params.sort,
+              })}
+              className="text-[var(--plum)] underline-offset-4 hover:underline"
+            >
+              Clear search
+            </Link>
+          </>
+        ) : null}
+      </p>
+      <Suspense fallback={null}>
+        <ShopSearchToolbar initialQuery={params.q} className="mt-6" />
+      </Suspense>
 
-      <div className="grid gap-6 lg:grid-cols-[240px_1fr] lg:gap-10">
+      <div className="mt-10 grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-12">
         <Suspense fallback={<div className="hidden h-40 animate-pulse bg-[var(--surface)] lg:block" />}>
           <ShopSidebarFilters categories={categories} families={FRAGRANCE_FAMILIES} />
         </Suspense>
@@ -59,14 +78,17 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
             </div>
           </Suspense>
           {products.length === 0 ? (
-            <div className="border border-dashed border-[var(--border)] py-20 text-center">
+            <div className="rounded-[var(--radius-lg)] border border-dashed border-[var(--border)] py-20 text-center">
               <p className="font-display text-xl text-[var(--muted)]">No fragrances found</p>
-              <Link href="/shop" className="mt-4 inline-block text-sm text-[var(--plum)] underline">
+              <Link
+                href="/shop"
+                className="mt-4 inline-block text-sm text-[var(--plum)] underline-offset-4 hover:underline"
+              >
                 Clear filters
               </Link>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6">
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
               {products.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
@@ -80,7 +102,7 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           />
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

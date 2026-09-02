@@ -12,6 +12,7 @@ import { ScentNotesDisplay } from "@/components/product/scent-notes";
 import { ProductCard } from "@/components/product/product-card";
 import { WishlistButton } from "@/components/product/wishlist-button";
 import { ProductReviews, type ProductReview } from "@/components/product/product-reviews";
+import { BackLink } from "@/components/layout/back-link";
 import { useCart } from "@/components/cart/cart-provider";
 import { formatNaira, fragranceFamilyLabel } from "@/lib/utils";
 import type { Product, ProductVariation } from "@/types";
@@ -20,11 +21,23 @@ interface ProductDetailProps {
   product: Product;
   related: Product[];
   reviews: ProductReview[];
+  totalReviews: number;
+  reviewPage: number;
+  reviewAverage: number | null;
   isLoggedIn: boolean;
   inWishlist: boolean;
 }
 
-export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlist }: ProductDetailProps) {
+export function ProductDetail({
+  product,
+  related,
+  reviews,
+  totalReviews,
+  reviewPage,
+  reviewAverage,
+  isLoggedIn,
+  inWishlist,
+}: ProductDetailProps) {
   const variations = (product.variations ?? []).filter((v) => v.active);
   const [selectedVariation, setSelectedVariation] = useState<ProductVariation>(
     variations[0]
@@ -65,15 +78,20 @@ export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlis
     return (
       <div className="mx-auto max-w-7xl px-4 py-20 text-center">
         <p>This product has no available variations.</p>
-        <Button asChild className="mt-4"><Link href="/shop">Back to Shop</Link></Button>
+        <Button asChild className="mt-4"><Link href="/shop">Back to shop</Link></Button>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8 md:py-16">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:py-10 md:px-8 md:py-16">
+      <BackLink
+        href={product.category?.slug ? `/shop/${product.category.slug}` : "/shop"}
+        label={product.category?.name ? `Back to ${product.category.name}` : "Back to shop"}
+        className="mb-6"
+      />
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <div className="relative aspect-[3/4] overflow-hidden bg-[var(--surface)]">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface)]">
           {displayImage ? (
             <Image
               src={displayImage.image_url}
@@ -131,7 +149,7 @@ export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlis
                   type="button"
                   disabled={v.stock_quantity < 1}
                   onClick={() => setSelectedVariation(v)}
-                  className={`border px-4 py-2 text-sm transition-colors disabled:opacity-40 ${
+                  className={`cursor-pointer rounded-[var(--radius-sm)] border px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                     selectedVariation.id === v.id
                       ? "border-[var(--plum)] bg-[var(--plum)] text-white"
                       : "border-[var(--border)] hover:border-[var(--mauve)]"
@@ -147,10 +165,10 @@ export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlis
             <label htmlFor="qty" className="text-[10px] uppercase tracking-[0.2em] text-[var(--muted)]">
               Qty
             </label>
-            <div className="flex items-center border border-[var(--border)]">
+            <div className="flex items-center overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)]">
               <button
                 type="button"
-                className="px-3 py-2"
+                className="cursor-pointer px-3 py-2 transition-colors hover:bg-[var(--surface)]"
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 aria-label="Decrease quantity"
               >
@@ -159,7 +177,7 @@ export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlis
               <span id="qty" className="w-10 text-center text-sm">{quantity}</span>
               <button
                 type="button"
-                className="px-3 py-2"
+                className="cursor-pointer px-3 py-2 transition-colors hover:bg-[var(--surface)]"
                 onClick={() => setQuantity(Math.min(selectedVariation.stock_quantity, quantity + 1))}
                 aria-label="Increase quantity"
               >
@@ -224,6 +242,9 @@ export function ProductDetail({ product, related, reviews, isLoggedIn, inWishlis
         productId={product.id}
         productSlug={product.slug}
         reviews={reviews}
+        totalReviews={totalReviews}
+        reviewPage={reviewPage}
+        reviewAverage={reviewAverage}
         isLoggedIn={isLoggedIn}
       />
     </div>

@@ -49,7 +49,7 @@ export function WishlistButton({
       disabled={pending}
       aria-label={inWishlist ? "Remove from wishlist" : "Add to wishlist"}
       className={cn(
-        "rounded-full border border-[var(--border)] bg-white/90 p-2 shadow-sm transition-colors hover:border-[var(--plum)]",
+        "cursor-pointer rounded-full border border-[var(--border)] bg-white/90 p-2 shadow-sm transition-colors hover:border-[var(--plum)] hover:opacity-90",
         inWishlist && "border-[var(--plum)] text-[var(--plum)]",
         className
       )}

@@ -43,6 +43,26 @@ export async function toggleWishlist(productId: string) {
   return { success: true, added: true };
 }
 
+export async function removeWishlistItem(itemId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { error: "Sign in to manage your wishlist" };
+
+  const { error } = await supabase
+    .from("wishlist_items")
+    .delete()
+    .eq("id", itemId)
+    .eq("user_id", user.id);
+
+  if (error) return { error: formatFeatureError(error, "wishlist") };
+  revalidatePath("/account/wishlist");
+  revalidatePath("/product");
+  return { success: true };
+}
+
 export async function isInWishlist(productId: string) {
   const supabase = await createClient();
   const {

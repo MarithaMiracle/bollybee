@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { createProduct } from "@/actions/admin-products";
 import { FRAGRANCE_FAMILIES } from "@/lib/utils";
 import type { Category } from "@/types";
@@ -42,29 +44,29 @@ export function ProductForm({ categories }: { categories: Category[] }) {
         </div>
         <div>
           <Label htmlFor="categoryId">Category</Label>
-          <select id="categoryId" name="categoryId" className="flex h-11 w-full border border-[var(--border)] px-3 text-sm">
+          <Select id="categoryId" name="categoryId">
             <option value="">None</option>
             {categories.map((c) => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <Label htmlFor="fragranceFamily">Fragrance Family</Label>
-          <select id="fragranceFamily" name="fragranceFamily" className="flex h-11 w-full border border-[var(--border)] px-3 text-sm">
+          <Select id="fragranceFamily" name="fragranceFamily">
             <option value="">None</option>
             {FRAGRANCE_FAMILIES.map((f) => (
               <option key={f} value={f}>{f}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <Label htmlFor="gender">Gender</Label>
-          <select id="gender" name="gender" className="flex h-11 w-full border border-[var(--border)] px-3 text-sm">
+          <Select id="gender" name="gender" defaultValue="UNISEX">
             <option value="UNISEX">Unisex</option>
             <option value="WOMEN">Women</option>
             <option value="MEN">Men</option>
-          </select>
+          </Select>
         </div>
       </div>
       <div>
@@ -73,7 +75,7 @@ export function ProductForm({ categories }: { categories: Category[] }) {
       </div>
       <div>
         <Label htmlFor="description">Description</Label>
-        <textarea id="description" name="description" rows={4} className="w-full border border-[var(--border)] p-3 text-sm" />
+        <Textarea id="description" name="description" rows={4} />
       </div>
       <div className="flex flex-wrap gap-4 text-sm">
         <label className="flex items-center gap-2"><input type="checkbox" name="featured" /> Featured</label>

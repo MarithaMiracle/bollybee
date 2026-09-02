@@ -121,7 +121,7 @@ export function AccountMobileNavLink({
   return (
     <Link
       href={href}
-      className={isLoggedIn ? `normal-case tracking-normal ${className ?? ""}` : className}
+      className={isLoggedIn ? `normal-case tracking-normal transition-colors hover:text-[var(--plum)] ${className ?? ""}` : `transition-colors hover:text-[var(--plum)] ${className ?? ""}`}
       onClick={onNavigate}
     >
       {label}
