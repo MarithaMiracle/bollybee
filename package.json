@@ -17,7 +17,8 @@
     "db:lgas": "node scripts/generate-lga-migration.mjs",
     "db:stock-images": "node scripts/apply-stock-images.mjs",
     "db:hero": "node scripts/set-hero-image.mjs",
-    "db:about": "node scripts/set-about-image.mjs"
+    "db:about": "node scripts/set-about-image.mjs",
+    "brand:gravatar": "node scripts/generate-gravatar-logo.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",

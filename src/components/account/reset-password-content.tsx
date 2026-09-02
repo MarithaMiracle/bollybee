@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -16,55 +16,36 @@ import { createClient } from "@/lib/supabase/client";
 const SATIN_BG = "/brand/admin-login-satin-bg.png";
 const RESET_PATH = "/account/reset-password";
 
-function authCallbackUrl(extraParams: Record<string, string>) {
-  const next = encodeURIComponent(RESET_PATH);
-  const params = new URLSearchParams({ next, ...extraParams });
-  return `/auth/callback?${params.toString()}`;
-}
-
 export function ResetPasswordContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [hasSession, setHasSession] = useState(false);
+  const linkExpired = searchParams.get("error") === "expired";
 
   useEffect(() => {
     const supabase = createClient();
 
-    async function establishRecoverySession() {
+    async function loadSession() {
       const params = new URLSearchParams(window.location.search);
-      const code = params.get("code");
       const token_hash = params.get("token_hash");
       const type = params.get("type");
+      const code = params.get("code");
 
-      // Exchange auth tokens on the server callback so cookies persist in Next.js
-      if (code) {
-        window.location.replace(authCallbackUrl({ code }));
+      // Legacy / direct links — hand off to server recovery route
+      if (code || (token_hash && type)) {
+        const recoveryParams = new URLSearchParams();
+        if (code) recoveryParams.set("code", code);
+        if (token_hash) recoveryParams.set("token_hash", token_hash);
+        if (type) recoveryParams.set("type", type);
+        window.location.replace(`/auth/recovery?${recoveryParams.toString()}`);
         return;
-      }
-
-      if (token_hash && type) {
-        window.location.replace(
-          authCallbackUrl({
-            token_hash,
-            type,
-          })
-        );
-        return;
-      }
-
-      // Implicit-flow fallback: tokens arrive in the URL hash
-      if (window.location.hash.includes("access_token")) {
-        await new Promise((resolve) => setTimeout(resolve, 250));
       }
 
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
-      if (session) {
-        window.history.replaceState({}, "", RESET_PATH);
-      }
 
       setHasSession(!!session);
       setChecking(false);
@@ -74,15 +55,12 @@ export function ResetPasswordContent() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
-        if (session) {
-          window.history.replaceState({}, "", RESET_PATH);
-        }
         setHasSession(!!session);
         setChecking(false);
       }
     });
 
-    establishRecoverySession();
+    loadSession();
 
     return () => subscription.unsubscribe();
   }, []);
@@ -166,7 +144,9 @@ export function ResetPasswordContent() {
           ) : (
             <div className="mt-8 space-y-4">
               <p className="text-sm text-[var(--muted-foreground)]">
-                Request a new link below and we&apos;ll send a fresh email from Bollybee.
+                {linkExpired
+                  ? "That link is no longer valid. Request a new one below and we'll send a fresh email from Bollybee."
+                  : "Request a new link below and we'll send a fresh email from Bollybee."}
               </p>
               <RequestResetLinkForm />
             </div>

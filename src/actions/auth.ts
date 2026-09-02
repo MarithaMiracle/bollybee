@@ -9,7 +9,7 @@ import {
   passwordResetEmail,
   getResendTestInbox,
 } from "@/lib/email";
-import { authCallbackUrl } from "@/lib/site";
+import { authCallbackUrl, SITE_URL } from "@/lib/site";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -82,7 +82,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (!email) return { error: "Email is required" };
 
-  const redirectTo = authCallbackUrl("/account/reset-password");
+  const redirectTo = `${SITE_URL}/auth/recovery`;
 
   try {
     const supabase = createServiceClient();
@@ -92,7 +92,11 @@ export async function requestPasswordReset(formData: FormData) {
       options: { redirectTo },
     });
 
-    const resetLink = data?.properties?.action_link;
+    const hashedToken = data?.properties?.hashed_token;
+    // Direct link avoids Supabase PKCE redirect issues with admin.generateLink
+    const resetLink = hashedToken
+      ? `${SITE_URL}/auth/recovery?token_hash=${encodeURIComponent(hashedToken)}&type=recovery`
+      : data?.properties?.action_link;
 
     if (!error && resetLink) {
       const sent = await sendTemplatedEmail(email, passwordResetEmail(resetLink));
