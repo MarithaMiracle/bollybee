@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { SectionDivider } from "@/components/layout/filigree-divider";
+import { FiligreeRule } from "@/components/layout/filigree-divider";
 
 export default function NotFound() {
   return (
@@ -11,8 +11,6 @@ export default function NotFound() {
       />
 
       <div className="animate-fade-up relative mx-auto w-full max-w-lg text-center">
-        
-
         <p
           className="mt-6 font-display text-[7rem] leading-none tracking-tight text-[var(--plum)]/15 sm:text-[9rem]"
           aria-hidden
@@ -24,16 +22,18 @@ export default function NotFound() {
           This page has <em className="text-[var(--plum)]">evaporated.</em>
         </h1>
 
-        <p className="mt-5 text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">
+        <FiligreeRule className="mx-auto mt-6 max-w-xs opacity-50" />
+
+        <p className="mt-6 text-sm leading-relaxed text-[var(--muted-foreground)] sm:text-base">
           We followed the scent trail, through the entire shop, even past the sample packs, and found nothing.
           Whatever you were looking for, it&apos;s no longer on the bottle.
         </p>
 
-        <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <Button asChild size="lg">
+        <div className="mt-8 flex flex-col items-center gap-2.5 sm:mt-10 sm:flex-row sm:justify-center sm:gap-3">
+          <Button asChild size="sm" className="h-9 w-full max-w-[11rem] px-5 text-xs sm:h-11 sm:w-auto sm:max-w-none sm:px-8 sm:text-sm">
             <Link href="/shop">Shop Fragrances</Link>
           </Button>
-          <Button asChild variant="outline" size="lg">
+          <Button asChild variant="outline" size="sm" className="h-9 w-full max-w-[11rem] px-5 text-xs sm:h-11 sm:w-auto sm:max-w-none sm:px-8 sm:text-sm">
             <Link href="/">Back to Home</Link>
           </Button>
         </div>
@@ -54,8 +54,6 @@ export default function NotFound() {
           .
         </p>
       </div>
-
-      <SectionDivider className="relative mt-16 w-full max-w-xs opacity-50" />
     </div>
   );
 }

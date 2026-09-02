@@ -1,6 +1,7 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
+import { X } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -59,19 +60,30 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/45 backdrop-blur-[2px]" />
           <Dialog.Content
             className={cn(
-              "brand-panel-xl fixed left-1/2 top-1/2 z-[101] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2",
+              "brand-panel-xl fixed left-1/2 top-1/2 z-[101] w-[calc(100%-2rem)] max-w-md max-h-[min(90dvh,calc(100%-2rem))] -translate-x-1/2 -translate-y-1/2 overflow-y-auto",
               "bg-[var(--background)] p-6 shadow-[0_24px_80px_-20px_rgba(0,0,0,0.35)] outline-none md:p-8"
             )}
           >
-            <Dialog.Title className="font-display text-2xl text-[var(--foreground)]">
-              {options.title}
-            </Dialog.Title>
+            <div className="flex items-start justify-between gap-4">
+              <Dialog.Title className="font-display text-xl text-[var(--foreground)] sm:text-2xl">
+                {options.title}
+              </Dialog.Title>
+              <Dialog.Close asChild>
+                <button
+                  type="button"
+                  className="inline-flex min-h-10 min-w-10 shrink-0 cursor-pointer items-center justify-center rounded-[var(--radius-sm)] text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--plum)]"
+                  aria-label="Close dialog"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </Dialog.Close>
+            </div>
             {options.description && (
               <Dialog.Description className="mt-3 text-sm leading-relaxed text-[var(--muted-foreground)]">
                 {options.description}
               </Dialog.Description>
             )}
-            <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
               <Button
                 type="button"
                 variant="outline"

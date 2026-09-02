@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { DEFAULT_OG_DESCRIPTION, SITE_DOMAIN, SITE_NAME } from "@/lib/site";
 
@@ -5,7 +7,11 @@ export const alt = SITE_NAME;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const logoPath = join(process.cwd(), "public/brand/bollybee-mark.png");
+  const logoData = await readFile(logoPath);
+  const logoSrc = `data:image/png;base64,${logoData.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -27,22 +33,14 @@ export default function OpenGraphImage() {
             gap: 28,
           }}
         >
-          <div
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: "50%",
-              background: "linear-gradient(135deg, #5c3d4a 0%, #c4a4a4 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#faf8f5",
-              fontSize: 52,
-              fontFamily: "Georgia, serif",
-            }}
-          >
-            B
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={logoSrc}
+            alt=""
+            width={96}
+            height={117}
+            style={{ objectFit: "contain" }}
+          />
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <div
               style={{

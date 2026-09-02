@@ -9,7 +9,7 @@ import {
   passwordResetEmail,
   getResendTestInbox,
 } from "@/lib/email";
-import { authCallbackUrl, SITE_URL } from "@/lib/site";
+import { authCallbackUrl } from "@/lib/site";
 
 export async function signIn(formData: FormData) {
   const supabase = await createClient();
@@ -82,7 +82,7 @@ export async function requestPasswordReset(formData: FormData) {
 
   if (!email) return { error: "Email is required" };
 
-  const redirectTo = `${SITE_URL}/account/reset-password`;
+  const redirectTo = authCallbackUrl("/account/reset-password");
 
   try {
     const supabase = createServiceClient();

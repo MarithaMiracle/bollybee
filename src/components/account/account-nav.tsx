@@ -72,7 +72,7 @@ export function AccountHeader() {
       <button
         type="button"
         onClick={handleSignOut}
-        className="cursor-pointer text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)] transition-colors hover:text-[var(--plum)]"
+        className="relative z-20 inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-[var(--radius-sm)] px-3 text-xs uppercase tracking-[0.16em] text-[var(--muted-foreground)] transition-colors hover:bg-[var(--background)] hover:text-[var(--plum)]"
       >
         Sign out
       </button>

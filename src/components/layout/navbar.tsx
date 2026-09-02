@@ -9,6 +9,7 @@ import { siteContainerClassName } from "@/components/layout/site-container";
 import { SwirlDivider } from "@/components/layout/filigree-divider";
 import {
   AccountMobileNavLink,
+  AccountMobileSignOut,
   AccountNavLink,
   AccountNavTextLink,
 } from "@/components/layout/account-nav-link";
@@ -117,6 +118,12 @@ export function Navbar() {
               ))}
               <li>
                 <AccountMobileNavLink
+                  className="block text-sm uppercase tracking-[0.18em]"
+                  onNavigate={() => setMobileOpen(false)}
+                />
+              </li>
+              <li>
+                <AccountMobileSignOut
                   className="block text-sm uppercase tracking-[0.18em]"
                   onNavigate={() => setMobileOpen(false)}
                 />

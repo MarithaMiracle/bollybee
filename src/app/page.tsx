@@ -41,7 +41,7 @@ export default async function HomePage() {
             src={hero.image_url}
             alt={hero.alt_text ?? "Bollybee fragrance bottle on blush silk"}
             fill
-            className="object-cover object-[72%_center] md:object-right"
+            className="object-cover object-[88%_center] sm:object-[72%_center] md:object-right"
             priority
             sizes="100vw"
             quality={90}
@@ -50,29 +50,32 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-[var(--surface)]" />
         )}
         <div
-          className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-[var(--background)]/75 to-[var(--background)]/10 md:from-[var(--background)]/95 md:via-[var(--background)]/55 md:to-transparent"
+          className="absolute inset-0 bg-gradient-to-r from-[var(--background)] from-0% via-[var(--background)]/92 via-[38%] to-transparent to-[62%] sm:via-[var(--background)]/80 sm:via-50% sm:to-transparent sm:to-70% md:from-[var(--background)]/95 md:via-[var(--background)]/55 md:to-transparent"
           aria-hidden
         />
-        <div className="relative mx-auto flex min-h-[420px] max-w-7xl items-center px-4 py-14 sm:min-h-[480px] sm:py-16 md:min-h-[600px] md:px-8 md:py-32 lg:min-h-[680px]">
-          <div className="animate-fade-up max-w-xl space-y-5 sm:space-y-6">
+        <div className="relative mx-auto flex min-h-[420px] max-w-7xl items-end px-4 py-12 sm:min-h-[480px] sm:items-center sm:py-16 md:min-h-[600px] md:px-8 md:py-32 lg:min-h-[680px]">
+          <div className="animate-fade-up w-full max-w-[11.5rem] space-y-3.5 sm:max-w-md sm:space-y-5 md:max-w-xl md:space-y-6">
             <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--muted)]">
               Bollybee Fragrance Lab
             </p>
-            <h1 className="font-display text-3xl leading-tight tracking-wide sm:text-4xl md:text-6xl lg:text-7xl">
+            <h1 className="font-display text-[1.65rem] leading-tight tracking-wide sm:text-4xl md:text-6xl lg:text-7xl">
               Soft luxury,
               <br />
               <em className="text-[var(--plum)]">bottled.</em>
             </h1>
-            <p className="max-w-md text-sm leading-relaxed text-[var(--muted-foreground)] md:text-base">
-              Premium fragrances crafted for the modern Nigerian. Discover signature
-              scents that move with confidence and warmth.
+            <p className="text-xs leading-relaxed text-[var(--muted-foreground)] sm:max-w-md sm:text-sm md:text-base">
+              <span className="sm:hidden">Signature scents for modern Nigerian luxury.</span>
+              <span className="hidden sm:inline">
+                Premium fragrances crafted for the modern Nigerian. Discover signature
+                scents that move with confidence and warmth.
+              </span>
             </p>
-            <div className="flex flex-wrap gap-4">
-              <Button asChild size="lg">
+            <div className="flex flex-col items-start gap-2.5 sm:flex-row sm:flex-wrap sm:gap-4">
+              <Button asChild size="sm" className="h-9 px-4 text-xs sm:h-12 sm:px-8 sm:text-sm">
                 <Link href="/shop">Shop Fragrances</Link>
               </Button>
-              <Button asChild variant="outline" size="lg">
-                <Link href="/sample-packs">Try Sample Packs</Link>
+              <Button asChild variant="outline" size="sm" className="h-9 px-4 text-xs sm:h-12 sm:px-8 sm:text-sm">
+                <Link href="/sample-packs">Sample Packs</Link>
               </Button>
             </div>
           </div>

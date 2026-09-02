@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DEFAULT_OG_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { DEFAULT_OG_DESCRIPTION, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site";
 
 export function pageMetadata(
   title: string,
@@ -17,11 +17,13 @@ export function pageMetadata(
       siteName: SITE_NAME,
       locale: "en_NG",
       type: "website",
+      images: [OG_IMAGE],
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
+      images: [OG_IMAGE.url],
     },
   };
 }

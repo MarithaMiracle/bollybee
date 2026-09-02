@@ -198,6 +198,17 @@ export function ShopMobileFilters(props: ShopFiltersProps) {
     };
   }, [open]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+    }
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
   return (
     <div className="lg:hidden">
       <button
@@ -215,27 +226,37 @@ export function ShopMobileFilters(props: ShopFiltersProps) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-[60]" role="dialog" aria-modal="true" aria-label="Filters">
           <button
             type="button"
-            className="absolute inset-0 bg-black/50"
+            className="absolute inset-0 z-0 bg-black/50"
             aria-label="Close filters"
             onClick={() => setOpen(false)}
           />
-          <aside className="absolute inset-y-0 right-0 flex w-full max-w-sm flex-col rounded-l-[var(--radius-lg)] bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
-              <h2 className="font-display text-xl">Filters</h2>
+          <aside className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,20rem)] flex-col bg-white shadow-xl sm:max-w-sm sm:rounded-l-[var(--radius-lg)]">
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3 sm:px-5 sm:py-4">
+              <h2 className="font-display text-lg sm:text-xl">Filters</h2>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="cursor-pointer rounded-[var(--radius-sm)] p-2 text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--plum)]"
+                className="inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-3 text-xs font-medium uppercase tracking-[0.14em] text-[var(--plum)] transition-colors hover:bg-[var(--surface)]"
                 aria-label="Close filters"
               >
-                <X className="h-5 w-5" />
+                <span className="sm:hidden">Close</span>
+                <X className="h-5 w-5" aria-hidden />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-5">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5">
               <ShopFiltersPanel {...props} onNavigate={() => setOpen(false)} />
+            </div>
+            <div className="border-t border-[var(--border)] p-4 sm:p-5">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-[var(--radius)] bg-[var(--plum)] px-4 text-xs font-medium uppercase tracking-[0.16em] text-white transition-opacity hover:opacity-90"
+              >
+                Show results
+              </button>
             </div>
           </aside>
         </div>

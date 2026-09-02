@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -126,5 +127,36 @@ export function AccountMobileNavLink({
     >
       {label}
     </Link>
+  );
+}
+
+export function AccountMobileSignOut({
+  className,
+  onNavigate,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+}) {
+  const router = useRouter();
+  const { isLoggedIn } = useAccountNav();
+
+  if (!isLoggedIn) return null;
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    onNavigate?.();
+    router.push("/");
+    router.refresh();
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleSignOut}
+      className={`inline-flex min-h-11 w-full cursor-pointer items-center text-left text-sm normal-case tracking-normal text-[var(--muted-foreground)] transition-colors hover:text-[var(--plum)] ${className ?? ""}`}
+    >
+      Sign out
+    </button>
   );
 }

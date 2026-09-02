@@ -16,7 +16,7 @@ export function AccountLayoutShell({ children }: { children: React.ReactNode }) 
 
   return (
     <div className="flex flex-1 flex-col bg-[var(--satin-light)]">
-      <div className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:py-10 md:px-8 md:py-14">
+      <div className="mx-auto w-full max-w-3xl flex-1 px-4 pb-8 pt-12 sm:pb-10 sm:pt-14 md:px-8 md:py-14">
         <AccountHeader />
         <AccountTabs />
         <div className="mt-8">{children}</div>

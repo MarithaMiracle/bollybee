@@ -4,7 +4,7 @@ import { CartProvider } from "@/components/cart/cart-provider";
 import { ConfirmProvider } from "@/components/ui/confirm-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
-import { DEFAULT_OG_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
+import { DEFAULT_OG_DESCRIPTION, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,11 +20,13 @@ export const metadata: Metadata = {
     siteName: SITE_NAME,
     title: "Bollybee — Premium Fragrances",
     description: DEFAULT_OG_DESCRIPTION,
+    images: [OG_IMAGE],
   },
   twitter: {
     card: "summary_large_image",
     title: "Bollybee — Premium Fragrances",
     description: DEFAULT_OG_DESCRIPTION,
+    images: [OG_IMAGE.url],
   },
   icons: {
     icon: [{ url: "/brand/bollybee-mark.png", type: "image/png" }],
@@ -43,7 +45,16 @@ export default function RootLayout({
             <Navbar />
             <main className="flex min-w-0 flex-1 flex-col">{children}</main>
             <Footer />
-            <Toaster position="bottom-center" richColors />
+            <Toaster
+              position="bottom-center"
+              richColors
+              closeButton
+              toastOptions={{
+                classNames: {
+                  toast: "mb-[max(0.75rem,env(safe-area-inset-bottom))]",
+                },
+              }}
+            />
           </ConfirmProvider>
         </CartProvider>
       </body>

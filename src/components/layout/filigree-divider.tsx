@@ -81,7 +81,7 @@ function WaveEdge({ fill, tone = "light", flip = false, className }: WaveEdgePro
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="xMidYMin slice"
       className={cn(
-        "relative z-10 block w-full",
+        "pointer-events-none relative z-10 block w-full",
         WAVE_EDGE_HEIGHT,
         WAVE_EDGE_OVERLAP,
         flip && "origin-bottom scale-y-[-1]",

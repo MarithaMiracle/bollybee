@@ -25,3 +25,11 @@ export const SITE_NAME = "Bollybee Fragrance Lab";
 
 export const DEFAULT_OG_DESCRIPTION =
   "Premium perfume and fragrance e-commerce. Discover signature scents crafted for Nigeria.";
+
+/** Shared Open Graph image — used in layout and page metadata. */
+export const OG_IMAGE = {
+  url: "/opengraph-image",
+  width: 1200,
+  height: 630,
+  alt: SITE_NAME,
+} as const;

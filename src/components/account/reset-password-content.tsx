@@ -5,7 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
@@ -15,6 +14,13 @@ import { updatePassword } from "@/actions/auth";
 import { createClient } from "@/lib/supabase/client";
 
 const SATIN_BG = "/brand/admin-login-satin-bg.png";
+const RESET_PATH = "/account/reset-password";
+
+function authCallbackUrl(extraParams: Record<string, string>) {
+  const next = encodeURIComponent(RESET_PATH);
+  const params = new URLSearchParams({ next, ...extraParams });
+  return `/auth/callback?${params.toString()}`;
+}
 
 export function ResetPasswordContent() {
   const router = useRouter();
@@ -31,13 +37,25 @@ export function ResetPasswordContent() {
       const token_hash = params.get("token_hash");
       const type = params.get("type");
 
+      // Exchange auth tokens on the server callback so cookies persist in Next.js
       if (code) {
-        await supabase.auth.exchangeCodeForSession(code);
-      } else if (token_hash && type) {
-        await supabase.auth.verifyOtp({
-          token_hash,
-          type: type as EmailOtpType,
-        });
+        window.location.replace(authCallbackUrl({ code }));
+        return;
+      }
+
+      if (token_hash && type) {
+        window.location.replace(
+          authCallbackUrl({
+            token_hash,
+            type,
+          })
+        );
+        return;
+      }
+
+      // Implicit-flow fallback: tokens arrive in the URL hash
+      if (window.location.hash.includes("access_token")) {
+        await new Promise((resolve) => setTimeout(resolve, 250));
       }
 
       const {
@@ -45,7 +63,7 @@ export function ResetPasswordContent() {
       } = await supabase.auth.getSession();
 
       if (session) {
-        window.history.replaceState({}, "", "/account/reset-password");
+        window.history.replaceState({}, "", RESET_PATH);
       }
 
       setHasSession(!!session);
@@ -56,6 +74,9 @@ export function ResetPasswordContent() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN" || session) {
+        if (session) {
+          window.history.replaceState({}, "", RESET_PATH);
+        }
         setHasSession(!!session);
         setChecking(false);
       }
