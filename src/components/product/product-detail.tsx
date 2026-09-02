@@ -186,10 +186,10 @@ export function ProductDetail({
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex gap-2.5 sm:gap-3">
             <Button
               size="lg"
-              className="flex-1"
+              className="h-11 flex-1 px-3 text-sm sm:h-12 sm:px-8 sm:text-base"
               onClick={handleAddToCart}
               disabled={selectedVariation.stock_quantity < 1}
             >
@@ -198,7 +198,7 @@ export function ProductDetail({
             <Button
               size="lg"
               variant="outline"
-              className="flex-1"
+              className="h-11 flex-1 px-3 text-sm sm:h-12 sm:px-8 sm:text-base"
               onClick={handleBuyNow}
               disabled={selectedVariation.stock_quantity < 1}
             >
