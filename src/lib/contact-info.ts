@@ -1,6 +1,11 @@
 export const CONTACT_EMAIL = "hello@bollybeefragrancelab.com";
 export const CONTACT_PHONE = "+234 803 143 2383";
 export const CONTACT_PHONE_HREF = "tel:+2348031432383";
+/** Digits only with country code — for WhatsApp wa.me links */
+export const CONTACT_WHATSAPP_NUMBER = "2348031432383";
+export const CONTACT_WHATSAPP_HREF = `https://wa.me/${CONTACT_WHATSAPP_NUMBER}?text=${encodeURIComponent(
+  "Hi Bollybee, I’d like to ask about your fragrances."
+)}`;
 export const CONTACT_LOCATION = "Lagos, Nigeria";
 
 export const SOCIAL_LINKS = [

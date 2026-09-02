@@ -4,6 +4,7 @@ import { CartProvider } from "@/components/cart/cart-provider";
 import { ConfirmProvider } from "@/components/ui/confirm-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { WhatsAppFloat } from "@/components/layout/whatsapp-float";
 import { DEFAULT_OG_DESCRIPTION, OG_IMAGE, SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -45,6 +46,7 @@ export default function RootLayout({
             <Navbar />
             <main className="flex min-w-0 flex-1 flex-col">{children}</main>
             <Footer />
+            <WhatsAppFloat />
             <Toaster
               position="bottom-center"
               richColors
