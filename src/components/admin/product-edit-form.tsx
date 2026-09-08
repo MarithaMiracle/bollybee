@@ -15,8 +15,10 @@ import {
   uploadProductImage,
   deleteProductImage,
 } from "@/actions/admin-products";
+import { VariationRow } from "@/components/admin/variation-row";
+import { VariationFields } from "@/components/admin/variation-fields";
 import { useConfirm } from "@/components/ui/confirm-provider";
-import { FRAGRANCE_FAMILIES, formatNaira } from "@/lib/utils";
+import { FRAGRANCE_FAMILIES } from "@/lib/utils";
 import type { Category, Product, ProductVariation, ScentNote, ProductImage } from "@/types";
 import Image from "next/image";
 
@@ -44,9 +46,15 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
 
   async function handleAddVariation(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const result = await addVariation(product.id, new FormData(e.currentTarget));
-    result.error ? toast.error(result.error) : toast.success("Variation added");
-    if (!result.error) e.currentTarget.reset();
+    const form = e.currentTarget;
+    const result = await addVariation(product.id, new FormData(form));
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Variation added");
+    form.reset();
+    router.refresh();
   }
 
   async function handleAddNote(e: React.FormEvent<HTMLFormElement>) {
@@ -107,21 +115,17 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
 
       <section>
         <h2 className="font-display text-xl">Variations</h2>
-        <ul className="mt-4 space-y-2 text-sm">
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+          Each product can only have one variation per volume (ml). SKUs must be unique across the catalogue.
+        </p>
+        <ul className="mt-4 max-w-lg space-y-3">
           {(product.variations ?? []).map((v) => (
-            <li key={v.id} className="flex flex-col gap-1 rounded-[var(--radius-sm)] border border-[var(--border)] p-3 sm:flex-row sm:items-center sm:justify-between">
-              <span className="min-w-0 break-words">{v.name} — {formatNaira(v.price)} — Stock: {v.stock_quantity}</span>
-              <span className="shrink-0 text-[var(--muted)]">{v.sku}</span>
-            </li>
+            <VariationRow key={v.id} productId={product.id} variation={v} />
           ))}
         </ul>
-        <form onSubmit={handleAddVariation} className="mt-4 grid max-w-lg gap-3 sm:grid-cols-2">
-          <Input name="name" placeholder="50ml" required />
-          <Input name="volumeMl" type="number" placeholder="Volume (ml)" required />
-          <Input name="price" type="number" placeholder="Price (₦)" required />
-          <Input name="compareAtPrice" type="number" placeholder="Compare at (optional)" />
-          <Input name="sku" placeholder="SKU" required />
-          <Input name="stockQuantity" type="number" placeholder="Stock" required />
+        <form onSubmit={handleAddVariation} className="mt-6 grid max-w-lg gap-3 sm:grid-cols-2">
+          <p className="text-sm font-medium sm:col-span-2">Add new variation</p>
+          <VariationFields idPrefix={`add-${product.id}`} />
           <Button type="submit" className="sm:col-span-2">Add Variation</Button>
         </form>
       </section>

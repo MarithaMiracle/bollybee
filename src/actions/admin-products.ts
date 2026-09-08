@@ -103,20 +103,43 @@ export async function updateProduct(id: string, data: FormData) {
   return { success: true };
 }
 
-export async function addVariation(productId: string, data: FormData) {
-  await requireAdmin();
-  const supabase = createServiceClient();
-
-  const parsed = variationSchema.safeParse({
+function parseVariationForm(data: FormData, activeDefault = true) {
+  return variationSchema.safeParse({
     name: data.get("name"),
     volumeMl: Number(data.get("volumeMl")),
     price: Number(data.get("price")),
     compareAtPrice: data.get("compareAtPrice") ? Number(data.get("compareAtPrice")) : null,
     sku: data.get("sku"),
     stockQuantity: Number(data.get("stockQuantity")),
-    active: true,
+    active: data.has("active") ? data.get("active") === "on" : activeDefault,
   });
+}
 
+function variationDbError(
+  error: { code?: string; message?: string },
+  action: "add" | "update" | "delete"
+) {
+  const message = (error.message ?? "").toLowerCase();
+  if (error.code === "23505") {
+    if (message.includes("sku")) {
+      return "That SKU is already in use. Choose a unique SKU.";
+    }
+    if (message.includes("volume") || message.includes("product_id")) {
+      return "A variation with this volume (ml) already exists for this product. Edit the existing one instead.";
+    }
+    return "This variation conflicts with an existing one (duplicate volume or SKU).";
+  }
+  if (action === "delete") {
+    return "Failed to delete variation. It may be linked to existing orders.";
+  }
+  return action === "add" ? "Failed to add variation" : "Failed to update variation";
+}
+
+export async function addVariation(productId: string, data: FormData) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+
+  const parsed = parseVariationForm(data, true);
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid variation" };
   }
@@ -133,8 +156,55 @@ export async function addVariation(productId: string, data: FormData) {
     active: v.active,
   });
 
-  if (error) return { error: "Failed to add variation" };
+  if (error) return { error: variationDbError(error, "add") };
   revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+  return { success: true };
+}
+
+export async function updateVariation(variationId: string, productId: string, data: FormData) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+
+  const parsed = parseVariationForm(data, data.get("active") === "on");
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Invalid variation" };
+  }
+
+  const v = parsed.data;
+  const { error } = await supabase
+    .from("product_variations")
+    .update({
+      name: v.name,
+      volume_ml: v.volumeMl,
+      price: v.price,
+      compare_at_price: v.compareAtPrice,
+      sku: v.sku,
+      stock_quantity: v.stockQuantity,
+      active: v.active,
+    })
+    .eq("id", variationId)
+    .eq("product_id", productId);
+
+  if (error) return { error: variationDbError(error, "update") };
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
+  return { success: true };
+}
+
+export async function deleteVariation(variationId: string, productId: string) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+
+  const { error } = await supabase
+    .from("product_variations")
+    .delete()
+    .eq("id", variationId)
+    .eq("product_id", productId);
+
+  if (error) return { error: variationDbError(error, "delete") };
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/admin/products");
   return { success: true };
 }
 
