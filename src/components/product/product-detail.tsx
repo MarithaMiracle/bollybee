@@ -43,13 +43,19 @@ export function ProductDetail({
     variations[0]
   );
   const [quantity, setQuantity] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const { addItem } = useCart();
   const router = useRouter();
 
-  const images = (product.images ?? []).filter(
-    (img) => !img.variation_id || img.variation_id === selectedVariation?.id
-  );
-  const displayImage = images[0];
+  const images = [...(product.images ?? [])]
+    .filter((img) => !img.variation_id || img.variation_id === selectedVariation?.id)
+    .sort((a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id));
+  const displayImage = images[Math.min(activeImageIndex, Math.max(images.length - 1, 0))];
+
+  function handleSelectVariation(variation: ProductVariation) {
+    setSelectedVariation(variation);
+    setActiveImageIndex(0);
+  }
 
   function handleAddToCart() {
     if (!selectedVariation || selectedVariation.stock_quantity < 1) {
@@ -91,23 +97,51 @@ export function ProductDetail({
         className="mb-6"
       />
       <div className="grid gap-10 lg:grid-cols-2 lg:gap-16">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface)]">
-          {displayImage ? (
-            <Image
-              src={displayImage.image_url}
-              alt={displayImage.alt_text || product.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="(max-width:1024px) 100vw, 50vw"
-              quality={90}
-            />
-          ) : (
-            <ProductPlaceholder name={product.name} volumeMl={selectedVariation.volume_ml} />
-          )}
-          <div className="absolute right-3 top-3">
-            <WishlistButton productId={product.id} initialInWishlist={inWishlist} />
+        <div className="space-y-3">
+          <div className="relative aspect-[3/4] overflow-hidden rounded-[var(--radius-lg)] bg-[var(--surface)]">
+            {displayImage ? (
+              <Image
+                src={displayImage.image_url}
+                alt={displayImage.alt_text || product.name}
+                fill
+                className="object-cover"
+                priority
+                sizes="(max-width:1024px) 100vw, 50vw"
+                quality={90}
+              />
+            ) : (
+              <ProductPlaceholder name={product.name} volumeMl={selectedVariation.volume_ml} />
+            )}
+            <div className="absolute right-3 top-3">
+              <WishlistButton productId={product.id} initialInWishlist={inWishlist} />
+            </div>
           </div>
+          {images.length > 1 && (
+            <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
+              {images.map((img, index) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  onClick={() => setActiveImageIndex(index)}
+                  aria-label={`View photo ${index + 1}`}
+                  aria-pressed={index === activeImageIndex}
+                  className={`relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border transition-colors ${
+                    index === activeImageIndex
+                      ? "border-[var(--plum)] ring-1 ring-[var(--plum)]"
+                      : "border-[var(--border)] hover:border-[var(--plum)]/50"
+                  }`}
+                >
+                  <Image
+                    src={img.image_url}
+                    alt={img.alt_text || `${product.name} photo ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="120px"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -148,7 +182,7 @@ export function ProductDetail({
                   key={v.id}
                   type="button"
                   disabled={v.stock_quantity < 1}
-                  onClick={() => setSelectedVariation(v)}
+                  onClick={() => handleSelectVariation(v)}
                   className={`cursor-pointer rounded-[var(--radius-sm)] border px-4 py-2 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                     selectedVariation.id === v.id
                       ? "border-[var(--plum)] bg-[var(--plum)] text-white"

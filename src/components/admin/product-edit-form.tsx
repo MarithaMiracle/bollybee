@@ -17,6 +17,7 @@ import {
 } from "@/actions/admin-products";
 import { VariationRow } from "@/components/admin/variation-row";
 import { VariationFields } from "@/components/admin/variation-fields";
+import { ScentNoteRow } from "@/components/admin/scent-note-row";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { FRAGRANCE_FAMILIES } from "@/lib/utils";
 import type { Category, Product, ProductVariation, ScentNote, ProductImage } from "@/types";
@@ -41,7 +42,12 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
     setLoading(true);
     const result = await updateProduct(product.id, new FormData(e.currentTarget));
     setLoading(false);
-    result.error ? toast.error(result.error) : toast.success("Product updated");
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Product updated");
+    router.refresh();
   }
 
   async function handleAddVariation(e: React.FormEvent<HTMLFormElement>) {
@@ -59,20 +65,38 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
 
   async function handleAddNote(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const fd = new FormData(form);
     const result = await addScentNote(
       product.id,
       fd.get("noteType") as string,
       fd.get("name") as string
     );
-    result.error ? toast.error(result.error) : toast.success("Note added");
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Note added");
+    form.reset();
+    router.refresh();
   }
 
   async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const result = await uploadProductImage(product.id, new FormData(e.currentTarget));
-    result.error ? toast.error(result.error) : toast.success("Image uploaded");
+    const form = e.currentTarget;
+    const result = await uploadProductImage(product.id, new FormData(form));
+    if (result.error) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success("Image uploaded");
+    form.reset();
+    router.refresh();
   }
+
+  const sortedImages = [...(product.images ?? [])].sort(
+    (a, b) => a.sort_order - b.sort_order || a.id.localeCompare(b.id)
+  );
 
   return (
     <div className="space-y-12">
@@ -90,33 +114,73 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
           <Label htmlFor="categoryId">Category</Label>
           <Select id="categoryId" name="categoryId" defaultValue={product.category_id ?? ""}>
             <option value="">None</option>
-            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
           </Select>
         </div>
         <div>
           <Label htmlFor="fragranceFamily">Family</Label>
-          <Select id="fragranceFamily" name="fragranceFamily" defaultValue={product.fragrance_family ?? ""}>
+          <Select
+            id="fragranceFamily"
+            name="fragranceFamily"
+            defaultValue={product.fragrance_family ?? ""}
+          >
             <option value="">None</option>
-            {FRAGRANCE_FAMILIES.map((f) => <option key={f} value={f}>{f}</option>)}
+            {FRAGRANCE_FAMILIES.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
           </Select>
         </div>
         <div>
+          <Label htmlFor="gender">Gender</Label>
+          <Select id="gender" name="gender" defaultValue={product.gender ?? "UNISEX"}>
+            <option value="UNISEX">Unisex</option>
+            <option value="WOMEN">Women</option>
+            <option value="MEN">Men</option>
+          </Select>
+          <p className="mt-1 text-xs text-[var(--muted-foreground)]">
+            Audience for this product. Use the Kids category for children’s lines.
+          </p>
+        </div>
+        <div>
           <Label htmlFor="description">Description</Label>
-          <Textarea id="description" name="description" defaultValue={product.description ?? ""} rows={4} />
+          <Textarea
+            id="description"
+            name="description"
+            defaultValue={product.description ?? ""}
+            rows={4}
+          />
         </div>
         <div className="flex flex-wrap gap-4 text-sm">
-          <label className="flex items-center gap-2"><input type="checkbox" name="featured" defaultChecked={product.featured} /> Featured</label>
-          <label className="flex items-center gap-2"><input type="checkbox" name="isBestseller" defaultChecked={product.is_bestseller} /> Bestseller</label>
-          <label className="flex items-center gap-2"><input type="checkbox" name="isNew" defaultChecked={product.is_new} /> New</label>
-          <label className="flex items-center gap-2"><input type="checkbox" name="active" defaultChecked={product.active} /> Active</label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="featured" defaultChecked={product.featured} /> Featured
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="isBestseller" defaultChecked={product.is_bestseller} />{" "}
+            Bestseller
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="isNew" defaultChecked={product.is_new} /> New
+          </label>
+          <label className="flex items-center gap-2">
+            <input type="checkbox" name="active" defaultChecked={product.active} /> Active
+          </label>
         </div>
-        <Button type="submit" disabled={loading}>Save Changes</Button>
+        <Button type="submit" disabled={loading}>
+          Save Changes
+        </Button>
       </form>
 
       <section>
         <h2 className="font-display text-xl">Variations</h2>
         <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-          Each product can only have one variation per volume (ml). SKUs must be unique across the catalogue.
+          Each product can only have one variation per volume (ml). SKUs must be unique across the
+          catalogue.
         </p>
         <ul className="mt-4 max-w-lg space-y-3">
           {(product.variations ?? []).map((v) => (
@@ -126,34 +190,57 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
         <form onSubmit={handleAddVariation} className="mt-6 grid max-w-lg gap-3 sm:grid-cols-2">
           <p className="text-sm font-medium sm:col-span-2">Add new variation</p>
           <VariationFields idPrefix={`add-${product.id}`} />
-          <Button type="submit" className="sm:col-span-2">Add Variation</Button>
+          <Button type="submit" className="sm:col-span-2">
+            Add Variation
+          </Button>
         </form>
       </section>
 
       <section>
         <h2 className="font-display text-xl">Scent Notes</h2>
-        <ul className="mt-4 space-y-1 text-sm">
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+          Top, heart, and base notes shown on the product page. Edit or delete existing notes below.
+        </p>
+        <ul className="mt-4 max-w-lg space-y-3">
           {(product.scent_notes ?? []).map((n) => (
-            <li key={n.id}>{n.note_type}: {n.name}</li>
+            <ScentNoteRow key={n.id} productId={product.id} note={n} />
           ))}
         </ul>
-        <form onSubmit={handleAddNote} className="mt-4 flex flex-wrap gap-2">
-          <Select name="noteType" defaultValue="TOP">
-            <option value="TOP">Top</option>
-            <option value="HEART">Heart</option>
-            <option value="BASE">Base</option>
-          </Select>
-          <Input name="name" placeholder="Note name" required className="max-w-xs" />
+        <form onSubmit={handleAddNote} className="mt-4 flex flex-wrap items-end gap-2">
+          <div>
+            <Label htmlFor="noteType">Type</Label>
+            <Select id="noteType" name="noteType" defaultValue="TOP">
+              <option value="TOP">Top</option>
+              <option value="HEART">Heart</option>
+              <option value="BASE">Base</option>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="noteName">Note name</Label>
+            <Input id="noteName" name="name" placeholder="e.g. Jasmine" required className="max-w-xs" />
+          </div>
           <Button type="submit">Add Note</Button>
         </form>
       </section>
 
       <section>
         <h2 className="font-display text-xl">Images</h2>
+        <p className="mt-2 text-sm text-[var(--muted-foreground)]">
+          Upload multiple photos — shoppers can browse all of them on the product page. The first
+          image is the main/cover photo.
+        </p>
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
-          {(product.images ?? []).map((img) => (
-            <div key={img.id} className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)]">
+          {sortedImages.map((img, index) => (
+            <div
+              key={img.id}
+              className="relative aspect-square overflow-hidden rounded-[var(--radius-sm)] border border-[var(--border)]"
+            >
               <Image src={img.image_url} alt={img.alt_text || ""} fill className="object-cover" />
+              {index === 0 && (
+                <span className="absolute left-1 top-1 rounded-[var(--radius-sm)] bg-white/90 px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                  Cover
+                </span>
+              )}
               <button
                 type="button"
                 className="absolute right-1 top-1 cursor-pointer rounded-[var(--radius-sm)] bg-white px-2 py-1 text-xs transition-colors hover:bg-[var(--surface)]"
@@ -175,9 +262,15 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
             </div>
           ))}
         </div>
-        <form onSubmit={handleUpload} className="mt-4 space-y-3 max-w-md">
-          <Input name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
-          <Input name="altText" placeholder="Alt text" />
+        <form onSubmit={handleUpload} className="mt-4 max-w-md space-y-3">
+          <div>
+            <Label htmlFor="file">Image file</Label>
+            <Input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+          </div>
+          <div>
+            <Label htmlFor="altText">Alt text (optional)</Label>
+            <Input id="altText" name="altText" placeholder="Describe the photo" />
+          </div>
           <Button type="submit">Upload Image</Button>
         </form>
       </section>

@@ -212,14 +212,62 @@ export async function addScentNote(productId: string, noteType: string, name: st
   await requireAdmin();
   const supabase = createServiceClient();
 
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Note name is required" };
+  if (!["TOP", "HEART", "BASE"].includes(noteType)) {
+    return { error: "Choose Top, Heart, or Base" };
+  }
+
   const { error } = await supabase.from("scent_notes").insert({
     product_id: productId,
     note_type: noteType,
-    name,
+    name: trimmed,
     sort_order: 0,
   });
 
   if (error) return { error: "Failed to add scent note" };
+  revalidatePath(`/admin/products/${productId}`);
+  revalidatePath(`/product`);
+  return { success: true };
+}
+
+export async function updateScentNote(
+  noteId: string,
+  productId: string,
+  noteType: string,
+  name: string
+) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Note name is required" };
+  if (!["TOP", "HEART", "BASE"].includes(noteType)) {
+    return { error: "Choose Top, Heart, or Base" };
+  }
+
+  const { error } = await supabase
+    .from("scent_notes")
+    .update({ note_type: noteType, name: trimmed })
+    .eq("id", noteId)
+    .eq("product_id", productId);
+
+  if (error) return { error: "Failed to update scent note" };
+  revalidatePath(`/admin/products/${productId}`);
+  return { success: true };
+}
+
+export async function deleteScentNote(noteId: string, productId: string) {
+  await requireAdmin();
+  const supabase = createServiceClient();
+
+  const { error } = await supabase
+    .from("scent_notes")
+    .delete()
+    .eq("id", noteId)
+    .eq("product_id", productId);
+
+  if (error) return { error: "Failed to delete scent note" };
   revalidatePath(`/admin/products/${productId}`);
   return { success: true };
 }
@@ -248,16 +296,24 @@ export async function uploadProductImage(productId: string, formData: FormData) 
 
   const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(path);
 
+  const { count } = await supabase
+    .from("product_images")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+
+  const sortOrder = Number(formData.get("sortOrder") || count || 0);
+
   const { error: dbError } = await supabase.from("product_images").insert({
     product_id: productId,
     variation_id: variationId || null,
     image_url: urlData.publicUrl,
-    alt_text: formData.get("altText") as string || null,
-    sort_order: Number(formData.get("sortOrder") || 0),
+    alt_text: (formData.get("altText") as string) || null,
+    sort_order: sortOrder,
   });
 
   if (dbError) return { error: "Failed to save image record" };
   revalidatePath(`/admin/products/${productId}`);
+  revalidatePath("/shop");
   return { success: true, url: urlData.publicUrl };
 }
 
