@@ -21,7 +21,7 @@ export default async function AdminCategoriesPage() {
     <div className="space-y-8">
       <AdminPageHeader
         title="Categories"
-        description={`${total} categor${total === 1 ? "y" : "ies"} · create and manage shop sections`}
+        description={`${total} categor${total === 1 ? "y" : "ies"} · manage names, visibility, and homepage cover images`}
       />
 
       <AdminCard>

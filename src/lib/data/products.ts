@@ -61,7 +61,9 @@ export async function getCategories() {
   return data ?? [];
 }
 
-/** Active shop categories with a cover image taken from a product in that category. */
+/** Active shop categories for homepage tiles.
+ * Prefers an admin-uploaded category image; otherwise uses a product photo from that category.
+ */
 export async function getShopCategoriesWithProductImages(
   excludeSlugs: string[] = ["gift-sets", "sample-packs"]
 ): Promise<(Category & { image_alt?: string | null })[]> {
@@ -79,43 +81,61 @@ export async function getShopCategoriesWithProductImages(
   );
   if (!shopCategories.length) return [];
 
-  const { data: products } = await supabase
-    .from("products")
-    .select(
-      "id, category_id, featured, is_bestseller, created_at, images:product_images(image_url, alt_text, sort_order)"
-    )
-    .eq("active", true)
-    .in(
-      "category_id",
-      shopCategories.map((c) => c.id)
-    );
+  const needsFallback = shopCategories.filter((c) => !c.image_url);
+  const byCategory = new Map<
+    string,
+    {
+      product: {
+        featured: boolean;
+        is_bestseller: boolean;
+        created_at: string;
+      };
+      cover: { image_url: string; alt_text: string | null };
+    }[]
+  >();
 
-  type ProductRow = {
-    id: string;
-    category_id: string;
-    featured: boolean;
-    is_bestseller: boolean;
-    created_at: string;
-    images: { image_url: string; alt_text: string | null; sort_order: number }[] | null;
-  };
+  if (needsFallback.length > 0) {
+    const { data: products } = await supabase
+      .from("products")
+      .select(
+        "id, category_id, featured, is_bestseller, created_at, images:product_images(image_url, alt_text, sort_order)"
+      )
+      .eq("active", true)
+      .in(
+        "category_id",
+        needsFallback.map((c) => c.id)
+      );
 
-  const byCategory = new Map<string, ProductRow[]>();
-  for (const product of (products ?? []) as ProductRow[]) {
-    const list = byCategory.get(product.category_id) ?? [];
-    list.push(product);
-    byCategory.set(product.category_id, list);
+    type ProductRow = {
+      id: string;
+      category_id: string;
+      featured: boolean;
+      is_bestseller: boolean;
+      created_at: string;
+      images: { image_url: string; alt_text: string | null; sort_order: number }[] | null;
+    };
+
+    for (const product of (products ?? []) as ProductRow[]) {
+      const images = [...(product.images ?? [])].sort(
+        (a, b) => a.sort_order - b.sort_order || a.image_url.localeCompare(b.image_url)
+      );
+      const cover = images[0];
+      if (!cover) continue;
+      const list = byCategory.get(product.category_id) ?? [];
+      list.push({ product, cover });
+      byCategory.set(product.category_id, list);
+    }
   }
 
   return shopCategories.map((category) => {
-    const candidates = (byCategory.get(category.id) ?? [])
-      .map((product) => {
-        const images = [...(product.images ?? [])].sort(
-          (a, b) => a.sort_order - b.sort_order || a.image_url.localeCompare(b.image_url)
-        );
-        return { product, cover: images[0] ?? null };
-      })
-      .filter((entry) => entry.cover);
+    if (category.image_url) {
+      return {
+        ...category,
+        image_alt: category.name,
+      };
+    }
 
+    const candidates = [...(byCategory.get(category.id) ?? [])];
     candidates.sort((a, b) => {
       if (a.product.featured !== b.product.featured) return a.product.featured ? -1 : 1;
       if (a.product.is_bestseller !== b.product.is_bestseller) {
