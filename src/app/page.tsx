@@ -109,7 +109,7 @@ export default async function HomePage() {
             <div className="mx-auto max-w-7xl px-4 md:px-8">
               <h2 className="mb-10 text-center font-display text-2xl sm:text-3xl md:text-4xl">Shop by Category</h2>
               <div className="grid grid-cols-2 gap-2.5 sm:gap-3 md:grid-cols-4 md:gap-4">
-                {shopCategories.slice(0, 8).map((cat) => (
+                {shopCategories.map((cat) => (
                   <Link
                     key={cat.id}
                     href={`/shop/${cat.slug}`}

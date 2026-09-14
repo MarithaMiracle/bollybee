@@ -28,53 +28,7 @@ ON CONFLICT (key) DO UPDATE SET
   alt_text = EXCLUDED.alt_text,
   updated_at = NOW();
 
--- Product stock images (matched by fragrance profile)
-INSERT INTO product_images (product_id, image_url, alt_text, sort_order)
-SELECT p.id, v.image_url, v.alt_text, 0
-FROM products p
-JOIN (VALUES
-  ('velvet-amber', 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=2000&q=90&auto=format&fit=crop', 'Velvet Amber — warm amber perfume bottle'),
-  ('golden-oud', 'https://images.unsplash.com/photo-1772191399367-91ed8d95664b?w=2000&q=90&auto=format&fit=crop', 'Golden Oud — dark woody oud fragrance'),
-  ('midnight-bloom', 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=2000&q=90&auto=format&fit=crop', 'Midnight Bloom — floral evening perfume'),
-  ('vanilla-noir', 'https://images.unsplash.com/photo-1611146264101-358a3b387eee?w=2000&q=90&auto=format&fit=crop', 'Vanilla Noir — gourmand vanilla scent'),
-  ('citrus-muse', 'https://images.unsplash.com/photo-1585218334450-afcf929da36e?w=2000&q=90&auto=format&fit=crop', 'Citrus Muse — bright citrus fragrance'),
-  ('royal-musk', 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=2000&q=90&auto=format&fit=crop', 'Royal Musk — clean musk perfume'),
-  ('sandalwood-reserve', 'https://images.unsplash.com/photo-1725138804277-3216924a8f5c?w=2000&q=90&auto=format&fit=crop', 'Sandalwood Reserve — woody sandalwood scent'),
-  ('rose-elan', 'https://images.unsplash.com/photo-1595425959632-34f2822322ce?w=2000&q=90&auto=format&fit=crop', 'Rose Élan — elegant rose perfume')
-) AS v(slug, image_url, alt_text) ON p.slug = v.slug
-WHERE NOT EXISTS (
-  SELECT 1 FROM product_images pi WHERE pi.product_id = p.id
-);
-
-UPDATE product_images pi SET
-  image_url = v.image_url,
-  alt_text = v.alt_text
-FROM products p
-JOIN (VALUES
-  ('velvet-amber', 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?w=2000&q=90&auto=format&fit=crop', 'Velvet Amber — warm amber perfume bottle'),
-  ('golden-oud', 'https://images.unsplash.com/photo-1772191399367-91ed8d95664b?w=2000&q=90&auto=format&fit=crop', 'Golden Oud — dark woody oud fragrance'),
-  ('midnight-bloom', 'https://images.unsplash.com/photo-1587017539504-67cfbddac569?w=2000&q=90&auto=format&fit=crop', 'Midnight Bloom — floral evening perfume'),
-  ('vanilla-noir', 'https://images.unsplash.com/photo-1611146264101-358a3b387eee?w=2000&q=90&auto=format&fit=crop', 'Vanilla Noir — gourmand vanilla scent'),
-  ('citrus-muse', 'https://images.unsplash.com/photo-1585218334450-afcf929da36e?w=2000&q=90&auto=format&fit=crop', 'Citrus Muse — bright citrus fragrance'),
-  ('royal-musk', 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=2000&q=90&auto=format&fit=crop', 'Royal Musk — clean musk perfume'),
-  ('sandalwood-reserve', 'https://images.unsplash.com/photo-1725138804277-3216924a8f5c?w=2000&q=90&auto=format&fit=crop', 'Sandalwood Reserve — woody sandalwood scent'),
-  ('rose-elan', 'https://images.unsplash.com/photo-1595425959632-34f2822322ce?w=2000&q=90&auto=format&fit=crop', 'Rose Élan — elegant rose perfume')
-) AS v(slug, image_url, alt_text) ON p.slug = v.slug
-WHERE pi.product_id = p.id
-  AND pi.image_url LIKE '%images.unsplash.com%';
-
-UPDATE gift_sets SET image_url = 'https://images.unsplash.com/photo-1605463967516-b73a52062ab0?w=2000&q=90&auto=format&fit=crop'
-WHERE slug = 'signature-trio';
-
-UPDATE gift_sets SET image_url = 'https://images.unsplash.com/photo-1718466044521-d38654f3ba0a?w=2000&q=90&auto=format&fit=crop'
-WHERE slug = 'discovery-collection';
-
-UPDATE gift_sets SET image_url = 'https://images.unsplash.com/photo-1588514912908-8f5891714f8d?w=2000&q=90&auto=format&fit=crop'
-WHERE slug = 'floral-discovery-pack';
-
-UPDATE gift_sets SET image_url = 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?w=2000&q=90&auto=format&fit=crop'
-WHERE slug = 'oriental-discovery-pack';
-
+-- Category placeholder images (replace via admin / SQL when real photography is ready)
 UPDATE categories SET image_url = 'https://images.unsplash.com/photo-1541643600914-78b084683601?w=600&q=80&auto=format&fit=crop'
 WHERE slug = 'perfumes';
 
