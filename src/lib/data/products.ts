@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { SHOP_PAGE_SIZE } from "@/lib/pagination";
-import type { Product } from "@/types";
+import type { Category, Product } from "@/types";
 
 const PRODUCT_SELECT = `
   *,
