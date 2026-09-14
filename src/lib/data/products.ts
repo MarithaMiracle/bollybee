@@ -61,6 +61,78 @@ export async function getCategories() {
   return data ?? [];
 }
 
+/** Active shop categories with a cover image taken from a product in that category. */
+export async function getShopCategoriesWithProductImages(
+  excludeSlugs: string[] = ["gift-sets", "sample-packs"]
+): Promise<(Category & { image_alt?: string | null })[]> {
+  if (!isSupabaseConfigured()) return [];
+  const supabase = await createClient();
+
+  const { data: categories } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("active", true)
+    .order("name");
+
+  const shopCategories = ((categories ?? []) as Category[]).filter(
+    (c) => !excludeSlugs.includes(c.slug)
+  );
+  if (!shopCategories.length) return [];
+
+  const { data: products } = await supabase
+    .from("products")
+    .select(
+      "id, category_id, featured, is_bestseller, created_at, images:product_images(image_url, alt_text, sort_order)"
+    )
+    .eq("active", true)
+    .in(
+      "category_id",
+      shopCategories.map((c) => c.id)
+    );
+
+  type ProductRow = {
+    id: string;
+    category_id: string;
+    featured: boolean;
+    is_bestseller: boolean;
+    created_at: string;
+    images: { image_url: string; alt_text: string | null; sort_order: number }[] | null;
+  };
+
+  const byCategory = new Map<string, ProductRow[]>();
+  for (const product of (products ?? []) as ProductRow[]) {
+    const list = byCategory.get(product.category_id) ?? [];
+    list.push(product);
+    byCategory.set(product.category_id, list);
+  }
+
+  return shopCategories.map((category) => {
+    const candidates = (byCategory.get(category.id) ?? [])
+      .map((product) => {
+        const images = [...(product.images ?? [])].sort(
+          (a, b) => a.sort_order - b.sort_order || a.image_url.localeCompare(b.image_url)
+        );
+        return { product, cover: images[0] ?? null };
+      })
+      .filter((entry) => entry.cover);
+
+    candidates.sort((a, b) => {
+      if (a.product.featured !== b.product.featured) return a.product.featured ? -1 : 1;
+      if (a.product.is_bestseller !== b.product.is_bestseller) {
+        return a.product.is_bestseller ? -1 : 1;
+      }
+      return b.product.created_at.localeCompare(a.product.created_at);
+    });
+
+    const pick = candidates[0];
+    return {
+      ...category,
+      image_url: pick?.cover?.image_url ?? null,
+      image_alt: pick?.cover?.alt_text ?? category.name,
+    };
+  });
+}
+
 export async function getProducts(filters?: {
   category?: string;
   family?: string;

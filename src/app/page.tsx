@@ -7,8 +7,8 @@ import {
   getFeaturedProducts,
   getBestsellers,
   getNewArrivals,
-  getCategories,
   getGiftSets,
+  getShopCategoriesWithProductImages,
 } from "@/lib/data/products";
 import { getHeroContent } from "@/lib/data/site";
 import { TrustMarquee } from "@/components/layout/trust-marquee";
@@ -18,19 +18,15 @@ import { FRAGRANCE_FAMILIES, fragranceFamilyLabel } from "@/lib/utils";
 export const revalidate = 60;
 
 export default async function HomePage() {
-  const [featured, bestsellers, newArrivals, categories, giftSets, hero] =
+  const [featured, bestsellers, newArrivals, shopCategories, giftSets, hero] =
     await Promise.all([
       getFeaturedProducts(4),
       getBestsellers(4),
       getNewArrivals(4),
-      getCategories(),
+      getShopCategoriesWithProductImages(),
       getGiftSets(),
       getHeroContent(),
     ]);
-
-  const shopCategories = categories.filter((c) =>
-    !["gift-sets", "sample-packs"].includes(c.slug)
-  );
 
   return (
     <>
@@ -118,7 +114,7 @@ export default async function HomePage() {
                     {cat.image_url ? (
                       <Image
                         src={cat.image_url}
-                        alt={cat.name}
+                        alt={cat.image_alt || cat.name}
                         fill
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                         sizes="(max-width:768px) 50vw, 25vw"
