@@ -11,6 +11,7 @@ import {
 } from "@/actions/admin-categories";
 import { clearCategoryImage, uploadCategoryImage } from "@/actions/admin-site";
 import { AdminBadge } from "@/components/admin/admin-badge";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -72,10 +73,9 @@ export function CategoryRow({ category }: CategoryRowProps) {
     });
   }
 
-  function handleImageUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  function handleImageFile(file: File) {
+    const formData = new FormData();
+    formData.set("file", file);
     startTransition(async () => {
       const result = await uploadCategoryImage(category.id, formData);
       if (result.error) {
@@ -83,7 +83,6 @@ export function CategoryRow({ category }: CategoryRowProps) {
         return;
       }
       toast.success("Category image updated");
-      form.reset();
       router.refresh();
     });
   }
@@ -129,36 +128,27 @@ export function CategoryRow({ category }: CategoryRowProps) {
               </div>
             )}
           </div>
-          <form onSubmit={handleImageUpload} className="space-y-2">
-            <Label htmlFor={`image-${category.id}`} className="text-xs">
-              Cover image
-            </Label>
-            <Input
-              id={`image-${category.id}`}
-              name="file"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              required
+          <div className="space-y-2">
+            <p className="text-xs font-medium">Cover image</p>
+            <ImageDropzone
               disabled={pending}
-              className="text-xs"
+              label={pending ? "Uploading…" : "Drop or click"}
+              hint="JPEG/PNG/WebP"
+              className="[&_label]:px-2 [&_label]:py-3 [&_label]:text-xs"
+              onFile={handleImageFile}
             />
-            <div className="flex flex-wrap gap-1.5">
-              <Button type="submit" size="sm" disabled={pending}>
-                Upload
+            {category.image_url ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={pending}
+                onClick={handleClearImage}
+              >
+                Clear
               </Button>
-              {category.image_url ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  disabled={pending}
-                  onClick={handleClearImage}
-                >
-                  Clear
-                </Button>
-              ) : null}
-            </div>
-          </form>
+            ) : null}
+          </div>
         </div>
 
         <form onSubmit={handleSave} className="grid gap-3 sm:grid-cols-2">

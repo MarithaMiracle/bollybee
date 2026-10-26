@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,7 @@ import {
 import { VariationRow } from "@/components/admin/variation-row";
 import { VariationFields } from "@/components/admin/variation-fields";
 import { ScentNoteRow } from "@/components/admin/scent-note-row";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import { useConfirm } from "@/components/ui/confirm-provider";
 import { FRAGRANCE_FAMILIES } from "@/lib/utils";
 import type { Category, Product, ProductVariation, ScentNote, ProductImage } from "@/types";
@@ -36,6 +37,8 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
   const confirm = useConfirm();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [uploading, startUpload] = useTransition();
+  const imageAltRef = useRef<HTMLInputElement>(null);
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -81,17 +84,21 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
     router.refresh();
   }
 
-  async function handleUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const result = await uploadProductImage(product.id, new FormData(form));
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success("Image uploaded");
-    form.reset();
-    router.refresh();
+  function handleImageFile(file: File) {
+    const formData = new FormData();
+    formData.set("file", file);
+    const alt = imageAltRef.current?.value.trim();
+    if (alt) formData.set("altText", alt);
+    startUpload(async () => {
+      const result = await uploadProductImage(product.id, formData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Image uploaded");
+      if (imageAltRef.current) imageAltRef.current.value = "";
+      router.refresh();
+    });
   }
 
   const sortedImages = [...(product.images ?? [])].sort(
@@ -262,17 +269,23 @@ export function ProductEditForm({ product, categories }: ProductEditFormProps) {
             </div>
           ))}
         </div>
-        <form onSubmit={handleUpload} className="mt-4 max-w-md space-y-3">
+        <div className="mt-4 max-w-md space-y-3">
           <div>
-            <Label htmlFor="file">Image file</Label>
-            <Input id="file" name="file" type="file" accept="image/jpeg,image/png,image/webp" required />
+            <Label htmlFor="altText">Alt text (optional, used with next upload)</Label>
+            <Input
+              ref={imageAltRef}
+              id="altText"
+              name="altText"
+              placeholder="Describe the photo"
+              disabled={uploading}
+            />
           </div>
-          <div>
-            <Label htmlFor="altText">Alt text (optional)</Label>
-            <Input id="altText" name="altText" placeholder="Describe the photo" />
-          </div>
-          <Button type="submit">Upload Image</Button>
-        </form>
+          <ImageDropzone
+            disabled={uploading}
+            label={uploading ? "Uploading…" : "Drop product image here, or click to browse"}
+            onFile={handleImageFile}
+          />
+        </div>
       </section>
     </div>
   );

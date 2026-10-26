@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { toast } from "sonner";
 import { updateHeroAltText, updateHeroImage } from "@/actions/admin-site";
+import { ImageDropzone } from "@/components/admin/image-dropzone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +18,15 @@ interface HomepageHeroEditorProps {
 export function HomepageHeroEditor({ imageUrl, altText }: HomepageHeroEditorProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
+  const altUploadRef = useRef<HTMLInputElement>(null);
 
-  function handleUpload(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+  function uploadFile(file: File) {
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set(
+      "altText",
+      altUploadRef.current?.value.trim() || altText || "Bollybee fragrance bottle on blush silk"
+    );
     startTransition(async () => {
       const result = await updateHeroImage(formData);
       if (result.error) {
@@ -29,7 +34,6 @@ export function HomepageHeroEditor({ imageUrl, altText }: HomepageHeroEditorProp
         return;
       }
       toast.success("Hero image updated");
-      form.reset();
       router.refresh();
     });
   }
@@ -54,7 +58,7 @@ export function HomepageHeroEditor({ imageUrl, altText }: HomepageHeroEditorProp
         <h2 className="font-display text-lg">Hero image</h2>
         <p className="mt-1 text-sm text-[var(--muted-foreground)]">
           Full-bleed background on the homepage. Use a wide landscape photo (about 1600×900 or larger).
-          JPEG, PNG, or WebP up to 5MB.
+          Drag and drop or click to upload — JPEG, PNG, or WebP up to 5MB.
         </p>
       </div>
 
@@ -75,21 +79,11 @@ export function HomepageHeroEditor({ imageUrl, altText }: HomepageHeroEditorProp
         )}
       </div>
 
-      <form onSubmit={handleUpload} className="max-w-md space-y-3">
+      <div className="max-w-md space-y-3">
         <div>
-          <Label htmlFor="hero-file">Upload new hero image</Label>
+          <Label htmlFor="hero-alt-upload">Alt text (used with next upload)</Label>
           <Input
-            id="hero-file"
-            name="file"
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            required
-            disabled={pending}
-          />
-        </div>
-        <div>
-          <Label htmlFor="hero-alt-upload">Alt text</Label>
-          <Input
+            ref={altUploadRef}
             id="hero-alt-upload"
             name="altText"
             defaultValue={altText ?? ""}
@@ -97,10 +91,12 @@ export function HomepageHeroEditor({ imageUrl, altText }: HomepageHeroEditorProp
             disabled={pending}
           />
         </div>
-        <Button type="submit" disabled={pending}>
-          {pending ? "Uploading…" : "Replace hero image"}
-        </Button>
-      </form>
+        <ImageDropzone
+          disabled={pending}
+          label={pending ? "Uploading…" : "Drop hero image here, or click to browse"}
+          onFile={uploadFile}
+        />
+      </div>
 
       {imageUrl ? (
         <form onSubmit={handleAltSave} className="max-w-md space-y-3 border-t border-[var(--border)] pt-6">
